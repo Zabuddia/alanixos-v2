@@ -1,10 +1,10 @@
 {
-  hub = "alan-infrastructure-server";
+  hub = "alan-main-server";
   endpoint = "wireguard.fifefin.com:51820";
   port = 51820;
 
   peers = {
-    alan-infrastructure-server = {
+    alan-main-server = {
       address = "10.100.0.1";
       publicKey = "N7ZJS7K5oTlfRl0eDg0hcbWJXtyinHMDg5codoHubAg=";
     };
@@ -12,11 +12,11 @@
       address = "10.100.0.2";
       publicKey = "CPgaziLt9mszNM+ws9FqA+j24FJoXI3voRdd+IZqyRE=";
     };
-    alan-framework13-laptop = {
+    alan-framework-laptop = {
       address = "10.100.0.3";
       publicKey = "42X/dFZ5DMhtfdlhNxSife5vbDJk1q0x84/NU7+28gM=";
     };
-    alan-automation-server = {
+    alan-home-server = {
       address = "10.100.0.4";
       publicKey = "DW9410EVNL3StWTMXlZQjupzposPOblWjjetlzDoNkc=";
     };
@@ -36,7 +36,7 @@
       address = "10.100.0.8";
       publicKey = "BfkoesQqw760koMzeBvq8W9Rpa/7A0KOuuoplO7xxy0=";
     };
-    randy-media-server = {
+    randy-main-server = {
       address = "10.100.0.9";
       publicKey = "ii5JigjlHp7rL0v3hXSEsqPl3Zc06CbE76PexpPYbDg=";
     };

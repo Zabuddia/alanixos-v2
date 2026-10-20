@@ -48,14 +48,14 @@ nix flake update
 
 ## WireGuard
 
-- Hub: `alan-infrastructure-server`
+- Hub: `alan-main-server`
 - Network: `10.100.0.0/24`
 - Endpoint: `wireguard.fifefin.com:51820`
 - Peer addresses and public keys: `network/wireguard/inventory.nix`
 - Encrypted private keys: `secrets/wireguard/<hostname>.yaml`
 
 The router at the hub location must forward UDP port `51820` to
-`alan-infrastructure-server` at `192.168.10.225`.
+`alan-main-server` at `192.168.10.225`.
 
 ## Adding a host
 

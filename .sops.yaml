@@ -1,5 +1,5 @@
 creation_rules:
-  - path_regex: ^secrets/wireguard/alan-infrastructure-server\.yaml$
+  - path_regex: ^secrets/wireguard/alan-main-server\.yaml$
     age:
       - age16ca65fwnny3tjk890qvpmq5hu933auwzfjhzrupz50muynh7wc6q8z9n2c
       - age1fmjf2c6alaquxg558rgmrukswvfelxpq4jrr6tc8kvpe7xg07ulsa4tu7p
@@ -9,11 +9,11 @@ creation_rules:
       - age16ca65fwnny3tjk890qvpmq5hu933auwzfjhzrupz50muynh7wc6q8z9n2c
       - age14hvqw052wzn8wlxrevzlgydthcenjc7jh4t76gwqljglknj6maash22pl5
 
-  - path_regex: ^secrets/wireguard/alan-framework13-laptop\.yaml$
+  - path_regex: ^secrets/wireguard/alan-framework-laptop\.yaml$
     age:
       - age16ca65fwnny3tjk890qvpmq5hu933auwzfjhzrupz50muynh7wc6q8z9n2c
 
-  - path_regex: ^secrets/wireguard/alan-automation-server\.yaml$
+  - path_regex: ^secrets/wireguard/alan-home-server\.yaml$
     age:
       - age16ca65fwnny3tjk890qvpmq5hu933auwzfjhzrupz50muynh7wc6q8z9n2c
       - age17c8t7hl3zgtkdsmtg8yuzejy3nzy6eajzrjjtc2luyhp5zr8duzqn2pwd5
@@ -38,7 +38,7 @@ creation_rules:
       - age16ca65fwnny3tjk890qvpmq5hu933auwzfjhzrupz50muynh7wc6q8z9n2c
       - age1jx5wr5fq5yxgdqn9lhcgsa0y8w5fezdvu6mjzwjqxdee7lw654kshz0e9z
 
-  - path_regex: ^secrets/wireguard/randy-media-server\.yaml$
+  - path_regex: ^secrets/wireguard/randy-main-server\.yaml$
     age:
       - age16ca65fwnny3tjk890qvpmq5hu933auwzfjhzrupz50muynh7wc6q8z9n2c
       - age1xgpfqft6xks6qh0r29lqh2pmau6mhklqd5q8ylynmlevmemss4qsfs8tnv

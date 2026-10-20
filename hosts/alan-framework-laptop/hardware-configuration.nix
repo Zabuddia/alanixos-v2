@@ -1,4 +1,4 @@
-# Generated originally by nixos-generate-config for alan-framework13-laptop.
+# Generated originally by nixos-generate-config for alan-framework-laptop.
 {
   config,
   lib,

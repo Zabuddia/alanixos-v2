@@ -54,13 +54,13 @@
     {
       nixosConfigurations = builtins.mapAttrs (name: system: mkHost { inherit name system; }) {
         alan-ai-server = "x86_64-linux";
-        alan-automation-server = "x86_64-linux";
+        alan-home-server = "x86_64-linux";
         alan-backup-server = "x86_64-linux";
         alan-bitcoin-node = "x86_64-linux";
-        alan-framework13-laptop = "x86_64-linux";
-        alan-infrastructure-server = "x86_64-linux";
+        alan-framework-laptop = "x86_64-linux";
+        alan-main-server = "x86_64-linux";
         alan-tv-pc = "x86_64-linux";
-        randy-media-server = "x86_64-linux";
+        randy-main-server = "x86_64-linux";
         randy-tv-pc = "x86_64-linux";
       };
 
