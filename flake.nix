@@ -53,15 +53,15 @@
     in
     {
       nixosConfigurations = builtins.mapAttrs (name: system: mkHost { inherit name system; }) {
-        alan-big-nixos = "x86_64-linux";
-        alan-framework = "x86_64-linux";
-        alan-framework-laptop = "x86_64-linux";
-        alan-home = "x86_64-linux";
-        alan-node = "x86_64-linux";
-        alan-optiplex = "x86_64-linux";
-        alan-tv = "x86_64-linux";
-        fife-tv = "x86_64-linux";
-        randy-big-nixos = "x86_64-linux";
+        alan-ai-server = "x86_64-linux";
+        alan-automation-server = "x86_64-linux";
+        alan-backup-server = "x86_64-linux";
+        alan-bitcoin-node = "x86_64-linux";
+        alan-framework13-laptop = "x86_64-linux";
+        alan-infrastructure-server = "x86_64-linux";
+        alan-tv-pc = "x86_64-linux";
+        randy-media-server = "x86_64-linux";
+        randy-tv-pc = "x86_64-linux";
       };
 
       formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt-tree;
