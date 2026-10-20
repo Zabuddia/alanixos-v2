@@ -9,6 +9,7 @@
     ../../users/buddia.nix
     ../../users/buddia/desktop.nix
     ../../users/buddia/gaming.nix
+    ../../users/buddia/media.nix
   ];
 
   time.timeZone = "America/New_York";

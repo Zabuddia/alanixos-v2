@@ -4,18 +4,19 @@
   home-manager.users.buddia = {
     home.packages =
       (with pkgs; [
+        android-tools
         android-studio
         featherpad
+        gparted
         hyprpicker
-        kid3
+        imagemagick
         libreoffice
-        lrcget
         marktext
+        nodejs
+        python3
         remmina
-        tmux
         tor-browser
         usbimager
-        vlc
         wdisplays
         xournalpp
         zoom-us
@@ -23,9 +24,7 @@
       ++ (with pkgs-unstable; [
         firefox
         gimp
-        moonlight-qt
         sparrow
-        yt-dlp
       ]);
 
     programs.chromium = {

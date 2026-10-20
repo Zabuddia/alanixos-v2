@@ -4,9 +4,9 @@
     ../../network/wireguard
     ../../profiles/base.nix
     ../../profiles/desktop
-    ../../profiles/desktop/printing.nix
     ../../users/buddia.nix
     ../../users/buddia/desktop.nix
+    ../../users/buddia/disc.nix
   ];
 
   time.timeZone = "America/Chicago";

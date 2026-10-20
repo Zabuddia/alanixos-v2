@@ -36,34 +36,47 @@
 
   environment.systemPackages = with pkgs; [
     age
-    android-tools
+    bat
     bind
-    caddy
+    btop
     curl
     dosfstools
-    ffmpeg
-    gparted
+    duf
+    eza
+    fd
+    file
+    fzf
     git
     htop
-    imagemagick
+    iotop
     jq
     lm_sensors
     lsof
-    nodejs
     nano
+    ncdu
+    nmap
+    openssl
     p7zip
     parted
-    python3
+    pciutils
+    pv
     restic
     ripgrep
+    rsync
+    smartmontools
     sops
+    strace
+    tcpdump
+    tmux
+    traceroute
     tree
     unar
     unzip
     usbutils
-    vlc
-    w_scan2
     wget
+    which
+    xz
     zip
+    zstd
   ];
 }

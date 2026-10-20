@@ -2,8 +2,6 @@
 
 {
   home-manager.users.buddia.home.packages = [
-    pkgs.kodi-wayland
-    pkgs.makemkv
     (pkgs.retroarch.withCores (
       cores: with cores; [
         gambatte
@@ -18,6 +16,7 @@
     pkgs-unstable.dolphin-emu
     pkgs-unstable.eden
     pkgs-unstable.melonds
+    pkgs-unstable.moonlight-qt
     pkgs-unstable.ryubing
   ];
 }

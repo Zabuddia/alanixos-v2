@@ -5,14 +5,13 @@
     ../../profiles/base.nix
     ../../profiles/desktop
     ../../profiles/desktop/gaming.nix
-    ../../profiles/desktop/printing.nix
-    ../../services/flatpak.nix
     ../../services/sunshine.nix
     ../../services/tor.nix
     ../../users/buddia.nix
     ../../users/buddia/applications.nix
     ../../users/buddia/desktop.nix
     ../../users/buddia/gaming.nix
+    ../../users/buddia/media.nix
   ];
 
   time.timeZone = "America/Chicago";
