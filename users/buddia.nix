@@ -1,6 +1,12 @@
 { pkgs, ... }:
 
 {
+  imports = [
+    ./buddia/applications.nix
+    ./buddia/desktop.nix
+    ./buddia/gaming.nix
+  ];
+
   users.users.buddia = {
     isNormalUser = true;
     description = "Alan Fife";
@@ -27,20 +33,21 @@
         username = "buddia";
         homeDirectory = "/home/buddia";
         stateVersion = "25.11";
-        packages = with pkgs; [
-          firefox
-          libreoffice
-          remmina
-          tmux
-          vlc
-          xournalpp
-        ];
+        sessionPath = [ "/home/buddia/.local/bin" ];
+        sessionVariables = {
+          NPM_CONFIG_PREFIX = "/home/buddia/.local";
+          NODE_PATH = "/home/buddia/.local/lib/node_modules";
+        };
       };
 
       programs = {
         bash = {
           enable = true;
           enableCompletion = true;
+          shellAliases = {
+            ll = "ls -alh";
+            rebuild = "sudo nixos-rebuild switch --flake ~/.nixos-v2#$(hostname)";
+          };
         };
 
         git = {
@@ -56,4 +63,6 @@
       };
     };
   };
+
+  programs.ssh.startAgent = true;
 }
