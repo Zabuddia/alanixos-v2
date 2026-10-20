@@ -11,6 +11,11 @@
     };
 
     nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=v0.7.0";
+
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -18,6 +23,7 @@
       home-manager,
       nixpkgs,
       nixpkgs-unstable,
+      sops-nix,
       ...
     }:
     let
@@ -35,17 +41,27 @@
         nixpkgs.lib.nixosSystem {
           inherit system;
           specialArgs = {
+            hostname = name;
             inherit inputs pkgs-unstable;
           };
           modules = [
             home-manager.nixosModules.home-manager
+            sops-nix.nixosModules.sops
             ./hosts/${name}
           ];
         };
     in
     {
-      nixosConfigurations.alan-framework-laptop = mkHost {
-        name = "alan-framework-laptop";
+      nixosConfigurations = builtins.mapAttrs (name: system: mkHost { inherit name system; }) {
+        alan-big-nixos = "x86_64-linux";
+        alan-framework = "x86_64-linux";
+        alan-framework-laptop = "x86_64-linux";
+        alan-home = "x86_64-linux";
+        alan-node = "x86_64-linux";
+        alan-optiplex = "x86_64-linux";
+        alan-tv = "x86_64-linux";
+        fife-tv = "x86_64-linux";
+        randy-big-nixos = "x86_64-linux";
       };
 
       formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt-tree;

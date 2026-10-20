@@ -1,12 +1,6 @@
 { pkgs, ... }:
 
 {
-  imports = [
-    ./buddia/applications.nix
-    ./buddia/desktop.nix
-    ./buddia/gaming.nix
-  ];
-
   users.users.buddia = {
     isNormalUser = true;
     description = "Alan Fife";

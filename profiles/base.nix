@@ -1,6 +1,13 @@
-{ pkgs, ... }:
+{
+  hostname,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
+  networking.hostName = hostname;
+
   nix.settings.experimental-features = [
     "nix-command"
     "flakes"
@@ -9,7 +16,10 @@
 
   nixpkgs.config.allowUnfree = true;
 
-  time.timeZone = "America/Chicago";
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+
+  time.timeZone = lib.mkDefault "America/Chicago";
   i18n.defaultLocale = "en_US.UTF-8";
 
   networking.networkmanager.enable = true;
