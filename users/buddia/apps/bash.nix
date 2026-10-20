@@ -1,4 +1,5 @@
 {
+  # Bash is the interactive shell; aliases cover common repository operations.
   home-manager.users.buddia.programs.bash = {
     enable = true;
     enableCompletion = true;

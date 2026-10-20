@@ -1,4 +1,5 @@
-# Generated originally by nixos-generate-config for alan-framework-laptop.
+# Generated hardware facts: boot drivers, filesystems, platform, and CPU microcode.
+# Regenerate this file after changing the boot or root storage layout.
 {
   config,
   lib,

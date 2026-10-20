@@ -1,12 +1,13 @@
 { pkgs, ... }:
 
 {
-  # BIOS 3.05 exposes an unwired AMD ACP/PDM microphone on this model.
+  # BIOS 3.05 exposes an unwired AMD ACP/PDM microphone that can hide the real mic.
   boot.blacklistedKernelModules = [
     "snd_acp70"
     "snd_acp_pci"
   ];
 
+  # Keep PipeWire from repeatedly raising the hardware capture gain to noisy defaults.
   services.pipewire.wireplumber.extraConfig."51-framework-internal-mic" = {
     "monitor.alsa.rules" = [
       {
@@ -21,6 +22,7 @@
     ];
   };
 
+  # Set conservative hardware gain once per login; PipeWire handles user volume.
   systemd.user.services.framework-internal-mic-gain = {
     description = "Set Framework internal microphone gain";
     wantedBy = [ "default.target" ];

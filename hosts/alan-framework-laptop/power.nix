@@ -4,6 +4,7 @@ let
   swapFile = "/swapfile";
 in
 {
+  # Hibernate needs swap large enough to store the laptop's active memory.
   swapDevices = [
     {
       device = swapFile;
@@ -11,8 +12,10 @@ in
     }
   ];
 
+  # systemd in the initrd can resume the saved image before mounting the root filesystem.
   boot.initrd.systemd.enable = true;
 
+  # Closing the lid suspends first, then hibernates after the delay below.
   services.logind.settings.Login = {
     HandleLidSwitch = "suspend-then-hibernate";
     HandleLidSwitchExternalPower = "suspend-then-hibernate";
@@ -24,6 +27,7 @@ in
     HibernateOnACPower = "no";
   };
 
+  # A swap file can move on disk, so calculate its physical resume offset at each boot.
   systemd.services.hibernate-resume-swapfile = {
     description = "Refresh hibernate resume location for ${swapFile}";
     after = [ "swap.target" ];

@@ -1,4 +1,5 @@
 {
+  # Git identity and repository defaults shared by every machine.
   home-manager.users.buddia.programs.git = {
     enable = true;
     settings = {

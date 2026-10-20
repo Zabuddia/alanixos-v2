@@ -1,5 +1,10 @@
+# Nix build-result symlink.
 /result
+
+# Local direnv state and per-checkout activation file.
 /.direnv
 /.envrc
+
+# Editor swap and backup files.
 *.swp
 *~

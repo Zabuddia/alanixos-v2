@@ -1,3 +1,6 @@
+# The first recipient is the administrator key used to edit every secret.
+# The second, when present, is the target host's runtime key. This prevents one
+# compromised machine from decrypting another machine's WireGuard private key.
 creation_rules:
   - path_regex: ^secrets/wireguard/alan-main-server\.yaml$
     age:
