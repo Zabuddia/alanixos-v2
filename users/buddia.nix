@@ -1,4 +1,4 @@
-{ ... }:
+{ config, ... }:
 
 {
   # Shell, Git, and the SSH agent are available to Buddia on every machine.
@@ -8,9 +8,19 @@
     ./buddia/apps/ssh.nix
   ];
 
+  # The hash is decrypted before NixOS creates immutable user accounts.
+  sops.secrets."password-hashes/buddia" = {
+    neededForUsers = true;
+    mode = "0400";
+  };
+
+  # Account changes must go through this repository rather than `passwd` or `useradd`.
+  users.mutableUsers = false;
+
   users.users.buddia = {
     isNormalUser = true;
     description = "Alan Fife";
+    hashedPasswordFile = config.sops.secrets."password-hashes/buddia".path;
     extraGroups = [
       "input" # Physical and virtual input devices.
       "kvm" # Hardware-accelerated virtual machines.

@@ -16,14 +16,8 @@ let
   otherPeers = lib.filterAttrs (name: _: name != hub) peers;
 in
 {
-  # Each host decrypts only its own private key into a root-readable runtime file.
-  sops = {
-    defaultSopsFile = ../../secrets/wireguard/${hostname}.yaml;
-    age.keyFile = "/var/lib/sops-nix/key.txt";
-    secrets.private-key = {
-      mode = "0400";
-    };
-  };
+  # Decrypt the private key into a root-readable runtime file.
+  sops.secrets.private-key.mode = "0400";
 
   # Make every peer reachable as either its hostname or `<hostname>.wg`.
   networking.hosts = lib.mapAttrs' (

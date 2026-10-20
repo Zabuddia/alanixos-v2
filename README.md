@@ -10,7 +10,7 @@ NixOS configurations for Alan's computers.
 - `users/`: user accounts, application capabilities, and Home Manager configuration
 - `users/<name>/apps/`: applications with their own configuration
 - `services/`: reusable service configuration
-- `secrets/`: SOPS-encrypted host secrets
+- `secrets/hosts/`: SOPS-encrypted secrets readable by each target host
 - `flake.nix`: inputs and host definitions
 
 ## Commands
@@ -53,7 +53,7 @@ nix flake update
 - Network: `10.100.0.0/24`
 - Endpoint: `wireguard.fifefin.com:51820`
 - Peer addresses and public keys: `network/wireguard/inventory.nix`
-- Encrypted private keys: `secrets/wireguard/<hostname>.yaml`
+- Encrypted host secrets: `secrets/hosts/<hostname>.yaml`
 
 The router at the hub location must forward UDP port `51820` to
 `alan-main-server` at `192.168.10.225`.
@@ -66,5 +66,5 @@ The router at the hub location must forward UDP port `51820` to
 4. Add the host to the host map in `flake.nix`.
 5. Add its WireGuard address and public key to `network/wireguard/inventory.nix`.
 6. Add its SOPS recipient to `.sops.yaml` and create
-   `secrets/wireguard/<hostname>.yaml`.
+   `secrets/hosts/<hostname>.yaml`.
 7. Run `nix flake check --no-build`.

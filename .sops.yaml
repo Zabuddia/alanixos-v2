@@ -2,46 +2,46 @@
 # The second, when present, is the target host's runtime key. This prevents one
 # compromised machine from decrypting another machine's WireGuard private key.
 creation_rules:
-  - path_regex: ^secrets/wireguard/alan-main-server\.yaml$
+  - path_regex: ^secrets/hosts/alan-main-server\.yaml$
     age:
       - age16ca65fwnny3tjk890qvpmq5hu933auwzfjhzrupz50muynh7wc6q8z9n2c
       - age1fmjf2c6alaquxg558rgmrukswvfelxpq4jrr6tc8kvpe7xg07ulsa4tu7p
 
-  - path_regex: ^secrets/wireguard/alan-ai-server\.yaml$
+  - path_regex: ^secrets/hosts/alan-ai-server\.yaml$
     age:
       - age16ca65fwnny3tjk890qvpmq5hu933auwzfjhzrupz50muynh7wc6q8z9n2c
       - age14hvqw052wzn8wlxrevzlgydthcenjc7jh4t76gwqljglknj6maash22pl5
 
-  - path_regex: ^secrets/wireguard/alan-framework-laptop\.yaml$
+  - path_regex: ^secrets/hosts/alan-framework-laptop\.yaml$
     age:
       - age16ca65fwnny3tjk890qvpmq5hu933auwzfjhzrupz50muynh7wc6q8z9n2c
 
-  - path_regex: ^secrets/wireguard/alan-home-server\.yaml$
+  - path_regex: ^secrets/hosts/alan-home-server\.yaml$
     age:
       - age16ca65fwnny3tjk890qvpmq5hu933auwzfjhzrupz50muynh7wc6q8z9n2c
       - age17c8t7hl3zgtkdsmtg8yuzejy3nzy6eajzrjjtc2luyhp5zr8duzqn2pwd5
 
-  - path_regex: ^secrets/wireguard/alan-bitcoin-node\.yaml$
+  - path_regex: ^secrets/hosts/alan-bitcoin-node\.yaml$
     age:
       - age16ca65fwnny3tjk890qvpmq5hu933auwzfjhzrupz50muynh7wc6q8z9n2c
       - age1gvgt7lg6ledntcn3pcak6050spl8q88wjum852mjt6t984c95axq97m2wf
 
-  - path_regex: ^secrets/wireguard/alan-backup-server\.yaml$
+  - path_regex: ^secrets/hosts/alan-backup-server\.yaml$
     age:
       - age16ca65fwnny3tjk890qvpmq5hu933auwzfjhzrupz50muynh7wc6q8z9n2c
       - age15dpyxhmqtehzkhatfg65yh7nwslhtdmnyz4yrrtkj2y9mdzrjdfqj9kuq5
 
-  - path_regex: ^secrets/wireguard/alan-tv-pc\.yaml$
+  - path_regex: ^secrets/hosts/alan-tv-pc\.yaml$
     age:
       - age16ca65fwnny3tjk890qvpmq5hu933auwzfjhzrupz50muynh7wc6q8z9n2c
       - age17hrwk6gthhga9d993c8aexnvcfzaz7jwvhf3vt8uqzeul6na8smqmunnl8
 
-  - path_regex: ^secrets/wireguard/randy-tv-pc\.yaml$
+  - path_regex: ^secrets/hosts/randy-tv-pc\.yaml$
     age:
       - age16ca65fwnny3tjk890qvpmq5hu933auwzfjhzrupz50muynh7wc6q8z9n2c
       - age1jx5wr5fq5yxgdqn9lhcgsa0y8w5fezdvu6mjzwjqxdee7lw654kshz0e9z
 
-  - path_regex: ^secrets/wireguard/randy-main-server\.yaml$
+  - path_regex: ^secrets/hosts/randy-main-server\.yaml$
     age:
       - age16ca65fwnny3tjk890qvpmq5hu933auwzfjhzrupz50muynh7wc6q8z9n2c
       - age1xgpfqft6xks6qh0r29lqh2pmau6mhklqd5q8ylynmlevmemss4qsfs8tnv

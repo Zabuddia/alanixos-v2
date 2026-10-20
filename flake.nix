@@ -52,6 +52,7 @@
           modules = [
             home-manager.nixosModules.home-manager
             sops-nix.nixosModules.sops
+            ./secrets
             ./hosts/${name}
           ];
         };
