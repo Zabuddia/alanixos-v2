@@ -1,26 +1,18 @@
 # alanixos-v2
 
-A deliberately small NixOS configuration rebuilt from first principles.
+NixOS configurations for Alan's computers.
 
-The existing `alanixos` repository remains the production source of truth while
-this repository grows. Configuration is moved here intentionally, one machine
-or service at a time. It is not ready to switch onto yet.
+## Layout
 
-## Current scope
-
-- One host: `alan-framework-laptop`
-- One shared profile: `profiles/base.nix`
-- No custom option framework
-- No cluster or automatic failover
-- No secrets or state copied from the existing repository
+- `hosts/<hostname>/`: hardware configuration and host-specific settings
+- `profiles/`: reusable machine roles
+- `users/`: user accounts and Home Manager configuration
+- `services/`: reusable service configuration
+- `flake.nix`: inputs and host definitions
 
 ## Commands
 
-Evaluate everything without building a system closure:
-
-```bash
-nix flake check --no-build
-```
+Run these commands from the repository root.
 
 Format the Nix files:
 
@@ -28,19 +20,34 @@ Format the Nix files:
 nix fmt
 ```
 
-Inspect the proposed laptop configuration without activating it:
+Evaluate every configuration:
 
 ```bash
-sudo nixos-rebuild dry-build --flake .#alan-framework-laptop
+nix flake check --no-build
 ```
 
-Do not run `nixos-rebuild switch` from this repository until the laptop profile
-contains the desktop, user access, networking, and other features you need.
+Build a host without activating it:
 
-## Design rules
+```bash
+sudo nixos-rebuild build --flake .#<hostname>
+```
 
-1. Prefer normal NixOS options over a custom namespace.
-2. Keep host files as short lists of imports plus hardware-specific settings.
-3. Copy a small configuration before abstracting it prematurely.
-4. Every stateful service must document its data, backup, and restore process.
-5. Reliability comes from understandable recovery before automatic failover.
+Build and activate a host:
+
+```bash
+sudo nixos-rebuild switch --flake .#<hostname>
+```
+
+Update locked inputs:
+
+```bash
+nix flake update
+```
+
+## Adding a host
+
+1. Create `hosts/<hostname>/default.nix`.
+2. Add or generate `hosts/<hostname>/hardware-configuration.nix`.
+3. Import the required profiles, users, and services from the host module.
+4. Add the host to `nixosConfigurations` in `flake.nix`.
+5. Run `nix flake check --no-build`.

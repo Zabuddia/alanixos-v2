@@ -12,6 +12,7 @@
   i18n.defaultLocale = "en_US.UTF-8";
 
   networking.networkmanager.enable = true;
+  networking.firewall.enable = true;
 
   services.openssh = {
     enable = true;
@@ -21,20 +22,18 @@
     };
   };
 
-  users.users.buddia = {
-    isNormalUser = true;
-    description = "Alan Fife";
-    extraGroups = [
-      "networkmanager"
-      "wheel"
-    ];
-  };
-
   environment.systemPackages = with pkgs; [
     curl
     git
-    vim
+    htop
+    jq
+    lsof
+    nano
+    restic
+    ripgrep
+    tree
+    unzip
+    wget
+    zip
   ];
-
-  security.sudo.wheelNeedsPassword = true;
 }
