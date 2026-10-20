@@ -7,7 +7,8 @@ NixOS configurations for Alan's computers.
 - `hosts/<hostname>/`: hardware configuration and host-specific settings
 - `profiles/`: reusable machine roles
 - `network/`: shared network configuration and host inventory
-- `users/`: user accounts and Home Manager configuration
+- `users/`: user accounts, application capabilities, and Home Manager configuration
+- `users/<name>/apps/`: applications with their own configuration
 - `services/`: reusable service configuration
 - `secrets/`: SOPS-encrypted host secrets
 - `flake.nix`: inputs and host definitions

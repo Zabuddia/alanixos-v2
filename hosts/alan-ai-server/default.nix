@@ -8,10 +8,10 @@
     ../../services/sunshine.nix
     ../../services/tor.nix
     ../../users/buddia.nix
-    ../../users/buddia/applications.nix
     ../../users/buddia/desktop.nix
     ../../users/buddia/gaming.nix
     ../../users/buddia/media.nix
+    ../../users/buddia/workstation.nix
   ];
 
   time.timeZone = "America/Chicago";

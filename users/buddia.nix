@@ -1,6 +1,12 @@
-{ pkgs, ... }:
+{ ... }:
 
 {
+  imports = [
+    ./buddia/apps/bash.nix
+    ./buddia/apps/git.nix
+    ./buddia/apps/ssh.nix
+  ];
+
   users.users.buddia = {
     isNormalUser = true;
     description = "Alan Fife";
@@ -28,35 +34,9 @@
         homeDirectory = "/home/buddia";
         stateVersion = "25.11";
         sessionPath = [ "/home/buddia/.local/bin" ];
-        sessionVariables = {
-          NPM_CONFIG_PREFIX = "/home/buddia/.local";
-          NODE_PATH = "/home/buddia/.local/lib/node_modules";
-        };
       };
 
-      programs = {
-        bash = {
-          enable = true;
-          enableCompletion = true;
-          shellAliases = {
-            ll = "ls -alh";
-            rebuild = "sudo nixos-rebuild switch --flake ~/.nixos-v2#$(hostname)";
-          };
-        };
-
-        git = {
-          enable = true;
-          settings = {
-            user.name = "Alan Fife";
-            user.email = "fife.alan@protonmail.com";
-            init.defaultBranch = "main";
-          };
-        };
-
-        home-manager.enable = true;
-      };
+      programs.home-manager.enable = true;
     };
   };
-
-  programs.ssh.startAgent = true;
 }

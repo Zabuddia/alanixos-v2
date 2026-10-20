@@ -12,11 +12,11 @@
     ../../services/sunshine.nix
     ../../services/tor.nix
     ../../users/buddia.nix
-    ../../users/buddia/applications.nix
     ../../users/buddia/desktop.nix
     ../../users/buddia/disc.nix
     ../../users/buddia/gaming.nix
     ../../users/buddia/media.nix
+    ../../users/buddia/workstation.nix
   ];
 
   # Keep this at the release used for the machine's first NixOS installation.
