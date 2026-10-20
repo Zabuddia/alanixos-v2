@@ -16,10 +16,12 @@
 
     # User account and application capabilities.
     ../../users/buddia.nix
+    ../../users/buddia/apps/chromium.nix
+    ../../users/buddia/apps/nodejs.nix
+    ../../users/buddia/apps/vscodium.nix
     ../../users/buddia/desktop.nix
     ../../users/buddia/gaming.nix
     ../../users/buddia/media.nix
-    ../../users/buddia/workstation.nix
   ];
 
   time.timeZone = "America/Chicago";

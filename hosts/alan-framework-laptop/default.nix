@@ -20,11 +20,17 @@
 
     # User account and application capabilities.
     ../../users/buddia.nix
+    ../../users/buddia/bitcoin-wallet.nix
+    ../../users/buddia/browsers.nix
     ../../users/buddia/desktop.nix
+    ../../users/buddia/desktop-tools.nix
+    ../../users/buddia/development.nix
     ../../users/buddia/disc.nix
+    ../../users/buddia/documents.nix
     ../../users/buddia/gaming.nix
+    ../../users/buddia/graphics.nix
     ../../users/buddia/media.nix
-    ../../users/buddia/workstation.nix
+    ../../users/buddia/remote-access.nix
   ];
 
   # Keep this at the release used for the machine's first NixOS installation.
