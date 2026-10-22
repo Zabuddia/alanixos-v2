@@ -8,6 +8,7 @@
     # Minimal graphical system and user session for administration.
     ../../profiles/base.nix
     ../../profiles/desktop
+    ../../services/bitcoin-node.nix
     ../../users/buddia.nix
     ../../users/buddia/desktop.nix
   ];

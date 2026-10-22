@@ -18,6 +18,12 @@
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Provides hardened, composable modules for Bitcoin Core and related services.
+    nix-bitcoin = {
+      url = "github:fort-nix/nix-bitcoin";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
