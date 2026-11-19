@@ -46,8 +46,6 @@
         username = "buddia";
         homeDirectory = "/home/buddia";
         stateVersion = "25.11";
-        # Makes user-installed scripts and npm command wrappers directly executable.
-        sessionPath = [ "/home/buddia/.local/bin" ];
       };
 
       programs.home-manager.enable = true;

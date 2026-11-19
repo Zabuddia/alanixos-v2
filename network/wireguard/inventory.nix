@@ -1,9 +1,15 @@
-{
+rec {
   # All remote peers connect through this always-on machine.
   hub = "alan-main-server";
-  # Cloudflare DDNS keeps this endpoint pointed at the hub's public address.
-  endpoint = "wireguard.fifefin.com:51820";
+
+  # Virtual addresses are independent of every machine's physical LAN.
+  subnet = "10.100.0.0/24";
+
+  # DDNS keeps this public name pointed at whichever network currently hosts the hub.
+  dnsZone = "fifefin.com";
+  endpointHost = "wireguard.${dnsZone}";
   port = 51820;
+  endpoint = "${endpointHost}:${toString port}";
 
   # Addresses and keys stay attached to physical machines when roles change.
   peers = {

@@ -44,7 +44,7 @@ in
             inherit (hubPeer) publicKey;
             endpoint = inventory.endpoint;
             # Route only the private WireGuard subnet through the tunnel.
-            allowedIPs = [ "10.100.0.0/24" ];
+            allowedIPs = [ inventory.subnet ];
             # Keeps NAT mappings alive for clients behind home routers.
             persistentKeepalive = 25;
           }

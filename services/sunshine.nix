@@ -1,4 +1,31 @@
 {
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+
+let
+  # Sunshine stores credentials in its runtime state, so reapply the encrypted
+  # declarative value before each start to prevent Web UI configuration drift.
+  applyCredentials = pkgs.writeShellScript "sunshine-apply-credentials" ''
+    set -euo pipefail
+
+    password="$(${pkgs.coreutils}/bin/tr -d '\n' < ${lib.escapeShellArg config.sops.secrets.sunshine-password.path})"
+    if [ -z "$password" ]; then
+      echo "Sunshine password is empty" >&2
+      exit 1
+    fi
+
+    exec ${lib.getExe pkgs.sunshine} --creds buddia "$password"
+  '';
+in
+{
+  sops.secrets.sunshine-password = {
+    owner = "buddia";
+    mode = "0400";
+  };
+
   # uhid and uinput let streamed controllers appear as local input devices.
   boot.kernelModules = [ "uhid" ];
 
@@ -19,4 +46,6 @@
     capSysAdmin = true;
     settings.port = 47989;
   };
+
+  systemd.user.services.sunshine.serviceConfig.ExecStartPre = [ applyCredentials ];
 }

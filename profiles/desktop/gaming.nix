@@ -10,6 +10,8 @@
   programs.gamemode.enable = true; # Temporarily applies performance tuning for games.
   # The NixOS module supplies Steam plus its required libraries and hardware integration.
   programs.steam.enable = true;
+  # Combines paired Nintendo Switch Joy-Cons into a single controller.
+  services.joycond.enable = true;
 
   environment.systemPackages = with pkgs; [
     gamescope # Nested gaming compositor for resolution, scaling, and fullscreen control.

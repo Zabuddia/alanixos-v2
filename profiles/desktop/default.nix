@@ -40,8 +40,6 @@
     input.General.ClassicBondedOnly = false;
   };
   services.blueman.enable = true; # Graphical Bluetooth manager and tray applet.
-  # Combines paired Nintendo Switch Joy-Cons into a single controller.
-  services.joycond.enable = true;
 
   # dconf stores GTK application preferences.
   programs.dconf.enable = true;

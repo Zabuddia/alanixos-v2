@@ -2,69 +2,212 @@
 
 NixOS configurations for Alan's computers.
 
+## Design
+
+- Host files compose reusable profiles, user capabilities, network modules, and services.
+- Shared facts have one source of truth instead of being copied between hosts.
+- Services are private by default and are exposed only when their module says so.
+- Physical LAN addresses are not stored in the repository. Hosts use DHCP through NetworkManager.
+- WireGuard addresses identify machines on the private overlay and do not depend on their current LAN.
+- System and user configuration is expressed through Nix; persistent runtime state is documented separately.
+- Secrets are encrypted per host with SOPS and are decrypted only on the target machine.
+- Hardware configuration stays with the physical computer; roles and reusable behavior stay in modules.
+
+## Hosts
+
+| Host | Purpose | Configured functionality |
+| --- | --- | --- |
+| `alan-main-server` | Private-network hub and primary server | WireGuard hub, Cloudflare DDNS, administration desktop |
+| `alan-ai-server` | AI, GPU, media, and gaming system | Desktop, gaming, Tor client, Sunshine |
+| `alan-framework-laptop` | Primary portable computer | Desktop, development, documents, graphics, gaming, media, disc tools, printing, Tor, Sunshine, laptop power management |
+| `alan-home-server` | Home-automation server | Administration desktop and laptop hardware management |
+| `alan-bitcoin-node` | Bitcoin infrastructure | Bitcoin Core, Fulcrum, Mempool, Tor and onion services |
+| `alan-backup-server` | Backup and disc-ingest server | Administration desktop and disc tools |
+| `alan-tv-pc` | Alan's living-room computer | Media, disc tools, gaming and Sunshine |
+| `randy-main-server` | Randy's primary server | Administration desktop |
+| `randy-tv-pc` | Randy's living-room computer | Media, gaming and Sunshine |
+
+The host name is the final network identity. The repository does not create legacy or temporary aliases.
+
+## Composition
+
+`flake.nix` creates every `nixosConfigurations.<hostname>` output through the same builder. A host normally imports modules in this order:
+
+1. Its generated hardware configuration and any hardware-specific fixes.
+2. Private networking from `network/`.
+3. Reusable operating-system capabilities from `profiles/`.
+4. Only the services that should run on that host.
+5. The user account and required application capabilities from `users/`.
+
+Host files should contain facts unique to that machine, such as its role, time zone, swap size, hardware groups, and selected capabilities. Shared implementation belongs in a profile, network module, user module, or service module.
+
 ## Layout
 
-- `hosts/<hostname>/`: hardware configuration and host-specific settings
-- `profiles/`: reusable machine roles
-- `network/`: shared network configuration and host inventory
-- `users/`: user accounts, application capabilities, and Home Manager configuration
-- `users/<name>/apps/`: applications with their own configuration
-- `services/`: reusable service configuration
-- `secrets/hosts/`: SOPS-encrypted secrets readable by each target host
-- `flake.nix`: inputs and host definitions
+- `hosts/<hostname>/`: host composition, generated hardware configuration, and hardware-specific behavior
+- `profiles/`: reusable operating-system capabilities such as desktop, laptop, gaming, and printing support
+- `network/wireguard/`: WireGuard implementation and the authoritative peer inventory
+- `users/`: declarative accounts and groups
+- `users/<name>/`: application capability groups selected by hosts
+- `users/<name>/apps/`: applications that have their own configuration
+- `services/`: reusable system services selected explicitly by hosts
+- `secrets/hosts/`: SOPS-encrypted secrets readable only by the administrator and intended host
+- `.sops.yaml`: secret-file recipient rules
+- `flake.nix`: inputs, the shared host builder, and the host list
+- `flake.lock`: exact dependency revisions used for reproducible evaluation
+
+## Profiles and applications
+
+`profiles/base.nix` supplies common Nix, boot, locale, NetworkManager, firewall, SSH, and command-line administration settings.
+
+`profiles/desktop/` supplies the minimal graphical system: Sway, greetd, PipeWire, Bluetooth, Thunar, removable-media support, fonts, and graphical privilege prompts. Gaming, controller support, and printing remain separate capabilities so a host receives them only when needed.
+
+Home Manager owns Buddia's shell, Git configuration, SSH agent, user applications, and Sway configuration. Applications with meaningful settings have individual files under `users/buddia/apps/`; simple package collections are grouped by purpose under `users/buddia/`.
+
+Users are immutable with `users.mutableUsers = false`. Buddia's password hash is decrypted before account creation, so account changes must be made through this repository.
+
+## Services
+
+### Bitcoin node
+
+`services/bitcoin-node.nix` scopes nix-bitcoin to `alan-bitcoin-node` and enables:
+
+- Bitcoin Core with `txindex` and Tor-enforced networking
+- Fulcrum as the private Electrum server
+- Mempool as the block explorer
+- Bitcoin Core, Fulcrum, Mempool, and SSH onion services
+- automatic generation of service credentials outside the Nix store
+- `buddia` as the nix-bitcoin operator
+
+The blockchain, indexes, generated credentials, and Tor identities are persistent state. Preserve the relevant `/var/lib` data, `/etc/nix-bitcoin-secrets`, and `/var/lib/tor` when reinstalling or moving the node.
+
+### Sunshine
+
+`services/sunshine.nix` installs the Sunshine game-streaming service on selected hosts. It is not started automatically. Its Web UI password comes from the host's SOPS document and is reapplied before every start. WireGuard is trusted by the firewall, so Sunshine does not open its ports on every physical network interface.
+
+### Tor
+
+`services/tor.nix` provides a local SOCKS5 proxy for applications on selected hosts. The Bitcoin node has its own Tor configuration because it also publishes onion services.
+
+### WireGuard DDNS
+
+`services/ddns.nix` runs only on `alan-main-server`. It updates the public WireGuard endpoint from the values in `network/wireguard/inventory.nix`; the endpoint is not duplicated in the DDNS module.
+
+## WireGuard
+
+`network/wireguard/inventory.nix` is the single source of truth for:
+
+- the hub host
+- the virtual WireGuard subnet
+- the public endpoint name and port
+- every peer's stable WireGuard address and public key
+
+The current topology is hub-and-spoke:
+
+- `alan-main-server` accepts connections from every peer.
+- Other hosts connect only to `alan-main-server`.
+- The hub forwards traffic between WireGuard peers.
+- Each host is reachable as `<hostname>` and `<hostname>.wg` while the configuration is active.
+- Only the WireGuard subnet is routed through the tunnel; ordinary internet traffic uses the host's current network.
+
+The addresses assigned in the inventory are virtual overlay addresses, not addresses from a home, office, or public LAN. A computer can move between physical networks without changing its WireGuard identity.
+
+The network hosting `alan-main-server` must forward the UDP port declared as `port` in the WireGuard inventory to:
+
+```text
+<alan-main-server-LAN-IP>
+```
+
+That address belongs in the router's DHCP reservation and port-forward configuration, not in this repository. If the hub moves to another network, reserve its new LAN address and update that router's forwarding rule. Cloudflare DDNS updates the inventory's `endpointHost` when the public address changes.
+
+## Secrets and authentication
+
+Each host reads `secrets/hosts/<hostname>.yaml`. The encrypted files currently contain:
+
+- the host's WireGuard private key
+- Buddia's password hash
+- the Cloudflare DDNS token on `alan-main-server`
+- the Sunshine Web UI password on hosts that run Sunshine
+
+The matching age identity must exist at `/var/lib/sops-nix/key.txt` before a host can activate a configuration that uses secrets. This identity is bootstrap material and must be transferred securely; it is never committed to Git.
+
+Edit a host's encrypted document with:
+
+```bash
+sops secrets/hosts/<hostname>.yaml
+```
+
+When adding a secret, declare its owner and permissions in the module that consumes it. Do not place plaintext credentials, private keys, passwords, tokens, or generated runtime secrets in Nix files.
+
+## Declarative boundary
+
+Nix declares the desired operating-system and application configuration, but some state cannot be regenerated safely on every rebuild:
+
+- `/var/lib/sops-nix/key.txt` is the bootstrap identity that lets a machine decrypt its host secrets.
+- Sunshine retains authorized-client pairing state after its SOPS-managed Web UI password is applied.
+- nix-bitcoin generates service credentials and Tor identities on the node because committing their values would expose them.
+- Applications and services keep user data, databases, caches, indexes, and downloaded content outside the Nix store.
+
+Treat this as persistent data, not configuration. Back it up or migrate it when it is irreplaceable. Do not solve runtime state by committing generated files or secrets to Git.
 
 ## Commands
 
-Run these commands from the repository root.
+Run commands from the repository root.
 
-Format the Nix files:
+Format every Nix file:
 
 ```bash
 nix fmt
 ```
 
-Evaluate every configuration:
+Evaluate every host and flake output without building them:
 
 ```bash
 nix flake check --no-build
 ```
 
-Build a host without activating it:
+Build one host without activating it:
 
 ```bash
 sudo nixos-rebuild build --flake .#<hostname>
 ```
 
-Build and activate a host:
+Build and activate the configuration for the current host:
+
+```bash
+sudo nixos-rebuild switch --flake .#$(hostname)
+```
+
+Activate a named host configuration:
 
 ```bash
 sudo nixos-rebuild switch --flake .#<hostname>
 ```
 
-Update locked inputs:
+Update all locked inputs, then evaluate every host before committing:
 
 ```bash
 nix flake update
+nix flake check --no-build
 ```
-
-## WireGuard
-
-- Hub: `alan-main-server`
-- Network: `10.100.0.0/24`
-- Endpoint: `wireguard.fifefin.com:51820`
-- Peer addresses and public keys: `network/wireguard/inventory.nix`
-- Encrypted host secrets: `secrets/hosts/<hostname>.yaml`
-
-The router at the hub location must forward UDP port `51820` to
-`alan-main-server` at `192.168.10.225`.
 
 ## Adding a host
 
-1. Create `hosts/<hostname>/default.nix`.
-2. Add or generate `hosts/<hostname>/hardware-configuration.nix`.
-3. Import the required profiles, users, and services from the host module.
-4. Add the host to the host map in `flake.nix`.
-5. Add its WireGuard address and public key to `network/wireguard/inventory.nix`.
-6. Add its SOPS recipient to `.sops.yaml` and create
-   `secrets/hosts/<hostname>.yaml`.
-7. Run `nix flake check --no-build`.
+1. Choose its final descriptive hostname.
+2. Create `hosts/<hostname>/default.nix` and its hardware configuration.
+3. Import only the profiles, services, user, and application capabilities it needs.
+4. Add the host to the map in `flake.nix`.
+5. Add its stable WireGuard address and public key to `network/wireguard/inventory.nix`.
+6. Add its age recipient to `.sops.yaml`.
+7. Create `secrets/hosts/<hostname>.yaml` with its WireGuard private key and password hash.
+8. Run `nix fmt` and `nix flake check --no-build`.
+9. Build the host configuration before activating it.
+
+## Adding functionality
+
+- Put hardware-specific behavior under the corresponding host directory.
+- Put a reusable operating-system capability under `profiles/`.
+- Put a system daemon or network-facing workload under `services/`.
+- Put a user application with configuration under `users/<name>/apps/`.
+- Put a simple group of related user packages in a purpose-named file under `users/<name>/`.
+- Keep secrets beside neither hosts nor services in plaintext; declare them in the consuming module and store their values in the host's encrypted document.
+- Add comments for behavior, security boundaries, and non-obvious settings. Do not comment syntax that already explains itself.
