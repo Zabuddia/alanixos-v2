@@ -6,6 +6,9 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     # Selected desktop applications use newer versions from unstable.
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # OpenClaw stays on the last known-working package revision until the
+    # current unstable package's plugin-asset build is fixed upstream.
+    nixpkgs-openclaw.url = "github:NixOS/nixpkgs/9fbb54b33e91ee4ca368e35a78e0613c720600b3";
 
     # Declaratively manages Buddia's home-directory applications and settings.
     home-manager = {
@@ -30,6 +33,7 @@
     inputs@{
       home-manager,
       nixpkgs,
+      nixpkgs-openclaw,
       nixpkgs-unstable,
       sops-nix,
       ...
@@ -46,6 +50,10 @@
             inherit system;
             config.allowUnfree = true;
           };
+          openclawPkgs = import nixpkgs-openclaw {
+            inherit system;
+            config.permittedInsecurePackages = [ "openclaw-2026.6.33" ];
+          };
         in
         nixpkgs.lib.nixosSystem {
           inherit system;
@@ -54,6 +62,9 @@
             hostname = name;
             # pkgs-unstable is explicit so stable remains the default package set.
             inherit inputs pkgs-unstable;
+            # OpenClaw has an independent pin because its current unstable
+            # package does not build; other packages do not use this set.
+            openclawPackage = openclawPkgs.openclaw;
           };
           modules = [
             home-manager.nixosModules.home-manager

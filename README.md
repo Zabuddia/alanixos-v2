@@ -18,7 +18,7 @@ NixOS configurations for Alan's computers.
 | Host | Purpose | Configured functionality |
 | --- | --- | --- |
 | `alan-main-server` | Private-network hub and primary server | WireGuard hub, Cloudflare DDNS, administration desktop |
-| `alan-ai-server` | AI, GPU, media, and gaming system | Desktop, gaming, Tor client, Sunshine |
+| `alan-ai-server` | AI, GPU, media, and gaming system | Local model APIs, OpenClaw, speech services, desktop, gaming, Tor, Sunshine |
 | `alan-framework-laptop` | Primary portable computer | Desktop, development, documents, graphics, gaming, media, disc tools, printing, Tor, Sunshine, laptop power management |
 | `alan-home-server` | Home-automation server | Administration desktop and laptop hardware management |
 | `alan-bitcoin-node` | Bitcoin infrastructure | Bitcoin Core, Fulcrum, Mempool, Tor and onion services |
@@ -66,6 +66,47 @@ Home Manager owns Buddia's shell, Git configuration, SSH agent, user application
 Users are immutable with `users.mutableUsers = false`. Buddia's password hash is decrypted before account creation, so account changes must be made through this repository.
 
 ## Services
+
+### AI stack
+
+`services/ai/` contains the complete AI stack and is imported only by `alan-ai-server`:
+
+- `models.nix` runs the local models and the LiteLLM compatibility endpoint.
+- `openclaw.nix` owns the Jarvis gateway, declarative configuration, workspace files, credentials, and command-execution policy.
+- `speech.nix` provides Wyoming speech-to-text and text-to-speech services for Home Assistant.
+
+OpenClaw is independently pinned to the known-working `2026.6.33` Nixpkgs revision. The current unstable package fails during its upstream plugin-asset build; the separate input keeps that workaround isolated from NixOS and every other unstable application.
+
+The enabled model services are:
+
+| Service | Purpose | Port |
+| --- | --- | --- |
+| Qwen 3.8 27B | Vision and image understanding | `8086` |
+| Ornith 1.5 35B A3B | Jarvis reasoning and tool use | `8088` |
+| Qwen3 Embedding 4B | OpenClaw semantic memory | `8082` |
+| Whisper Small | OpenAI-compatible audio transcription | `8085` |
+| LiteLLM | One OpenAI-compatible endpoint for the local models | `4000` |
+| Wyoming Piper | Home Assistant text-to-speech | `10200` |
+| Wyoming Faster Whisper | Home Assistant speech-to-text | `10300` |
+
+The model services use Vulkan acceleration and run as the unprivileged `llm` system user. Model downloads and caches remain under `/var/lib/llm` so the existing v1 downloads can be reused; the Wyoming services keep their downloaded models in their systemd state directories. Services bind to the machine so WireGuard peers can use them, but the normal firewall does not expose them on physical network interfaces. Because `wg0` is intentionally trusted, every WireGuard peer can reach these ports.
+
+OpenClaw runs as a lingering user service owned by `buddia`. Its gateway listens on port `18789`, requires the SOPS-managed gateway token, and can be opened over WireGuard at `http://alan-ai-server.wg:18789`. Telegram is restricted to Alan's configured Telegram account. The Home Assistant MCP connection is declared for `alan-home-server`; it will become usable when Home Assistant is restored there.
+
+Jarvis intentionally has unrestricted gateway-host command execution. Its requested policy and local approval file both use full execution without prompts. Because it runs as `buddia` and Buddia has passwordless sudo, Jarvis can effectively administer the entire AI server. This is an explicit trust decision, not an accidental default.
+
+The v1 custom model dashboard was not carried forward. Standard service inspection keeps the implementation smaller:
+
+```bash
+systemctl status ai-ornith ai-qwen-vision ai-embeddings ai-whisper ai-litellm
+journalctl -fu ai-ornith
+systemctl --user status openclaw-gateway
+journalctl --user -fu openclaw-gateway
+openclaw models list
+openclaw channels status --probe
+```
+
+The first service start downloads the configured models and can take substantial time and storage. Rebuilds reuse the persistent downloads.
 
 ### Bitcoin node
 
@@ -127,6 +168,9 @@ Each host reads `secrets/hosts/<hostname>.yaml`. The encrypted files currently c
 - Buddia's password hash
 - the Cloudflare DDNS token on `alan-main-server`
 - the Sunshine Web UI password on hosts that run Sunshine
+- the OpenClaw gateway token on `alan-ai-server`
+- the OpenClaw Telegram bot token on `alan-ai-server`
+- the Home Assistant token used by OpenClaw on `alan-ai-server`
 
 The matching age identity must exist at `/var/lib/sops-nix/key.txt` before a host can activate a configuration that uses secrets. This identity is bootstrap material and must be transferred securely; it is never committed to Git.
 
@@ -145,6 +189,8 @@ Nix declares the desired operating-system and application configuration, but som
 - `/var/lib/sops-nix/key.txt` is the bootstrap identity that lets a machine decrypt its host secrets.
 - Sunshine retains authorized-client pairing state after its SOPS-managed Web UI password is applied.
 - nix-bitcoin generates service credentials and Tor identities on the node because committing their values would expose them.
+- Local model downloads and caches under `/var/lib/llm` are large reproducible runtime data.
+- OpenClaw keeps conversations, memory, pairing information, and other mutable state under `/home/buddia/.openclaw`; its configuration and workspace instructions remain declarative.
 - Applications and services keep user data, databases, caches, indexes, and downloaded content outside the Nix store.
 
 Treat this as persistent data, not configuration. Back it up or migrate it when it is irreplaceable. Do not solve runtime state by committing generated files or secrets to Git.

@@ -11,6 +11,7 @@
     ../../profiles/desktop/gaming.nix
 
     # Optional network-facing services.
+    ../../services/ai
     ../../services/sunshine.nix
     ../../services/tor.nix
 
