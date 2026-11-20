@@ -1,4 +1,8 @@
-{ config, ... }:
+{
+  config,
+  pkgs-unstable,
+  ...
+}:
 
 {
   # Radicale is a lightweight CalDAV and CardDAV server. Unlike the other
@@ -17,6 +21,7 @@
 
   services.radicale = {
     enable = true;
+    package = pkgs-unstable.radicale;
     settings = {
       server.hosts = [
         "0.0.0.0:5232"

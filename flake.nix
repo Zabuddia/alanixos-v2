@@ -4,7 +4,8 @@
   inputs = {
     # Stable release used for NixOS and most packages.
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    # Selected desktop applications use newer versions from unstable.
+    # Selected desktop applications and hosted services use current upstream
+    # releases from unstable while the operating system remains on stable.
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     # OpenClaw stays on the last known-working package revision until the
     # current unstable package's plugin-asset build is fixed upstream.

@@ -1,9 +1,14 @@
-{ config, ... }:
+{
+  config,
+  pkgs-unstable,
+  ...
+}:
 
 {
   # Jellyfin streams movies, shows, recordings, and other local video.
   services.jellyfin = {
     enable = true;
+    package = pkgs-unstable.jellyfin;
     openFirewall = false;
   };
 

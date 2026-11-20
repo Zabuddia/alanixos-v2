@@ -1,7 +1,18 @@
+{ pkgs-unstable, ... }:
+
 {
   # Open WebUI is the browser interface for models served by the AI server.
   services.open-webui = {
     enable = true;
+    package = pkgs-unstable.open-webui.overrideAttrs (old: {
+      # Nixpkgs currently passes these three wrapper arguments as one string,
+      # which the shell-wrapper hook rejects after the package has built.
+      makeWrapperArgs = [
+        "--set"
+        "FRONTEND_BUILD_DIR"
+        "${old.passthru.frontend}/share/open-webui"
+      ];
+    });
     host = "0.0.0.0";
     port = 18080;
     openFirewall = false;

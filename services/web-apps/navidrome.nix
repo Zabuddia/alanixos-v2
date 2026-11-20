@@ -1,9 +1,14 @@
-{ config, ... }:
+{
+  config,
+  pkgs-unstable,
+  ...
+}:
 
 {
   # Navidrome provides a web player and Subsonic-compatible API for music.
   services.navidrome = {
     enable = true;
+    package = pkgs-unstable.navidrome;
     openFirewall = false;
     settings = {
       Address = "0.0.0.0";

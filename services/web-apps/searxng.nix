@@ -1,4 +1,8 @@
-{ config, ... }:
+{
+  config,
+  pkgs-unstable,
+  ...
+}:
 
 {
   # Keep SearXNG's session secret outside the world-readable Nix store.
@@ -18,6 +22,7 @@
   # Open WebUI or OpenClaw a commercial search-provider dependency.
   services.searx = {
     enable = true;
+    package = pkgs-unstable.searxng;
     environmentFile = config.sops.templates.searxng-environment.path;
     openFirewall = false;
     settings = {

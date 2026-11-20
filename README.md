@@ -85,7 +85,11 @@ The applications currently listen on all addresses but do not open their ports i
 | SearXNG | Private metasearch | `http://alan-main-server.wg:8888` |
 | Vaultwarden | Bitwarden-compatible password manager | `http://alan-main-server.wg:8222` |
 
-Open WebUI uses LiteLLM on `alan-ai-server` and SearXNG on the same main server. Immich uses its NixOS-managed local PostgreSQL, Redis, and machine-learning services. Invidious uses its local PostgreSQL database and the sandboxed signature helper needed for video playback. Immich is taken from unstable because the stable Immich 2.x package is unsupported and marked insecure; every other application continues to use the stable package set.
+Open WebUI uses LiteLLM on `alan-ai-server` and SearXNG on the same main server. Immich uses its NixOS-managed local PostgreSQL, Redis, and machine-learning services. Invidious uses its local PostgreSQL database and the sandboxed signature helper needed for video playback.
+
+The operating system and NixOS service modules remain on stable `26.05`, while all nine application packages come explicitly from `nixpkgs-unstable`. This provides current upstream application releases without moving the entire operating system to an unstable NixOS branch.
+
+Open WebUI has one isolated package override that splits a malformed Nixpkgs wrapper argument into its three intended arguments. It changes no application source or runtime behavior and can be removed when the unstable package expression contains the correction.
 
 Application accounts remain in the applications' own databases. Existing accounts are retained when their v1 state directories are present; a fresh instance uses its normal first-run setup. Open WebUI makes its first account the administrator and leaves later accounts pending. Invidious and Vaultwarden registration are enabled while the services are WireGuard-only so initial accounts can be created; disable registration before adding public exposure. Vaultwarden's browser vault requires trusted HTTPS for normal Web Crypto support, so its public exposure must provide TLS.
 

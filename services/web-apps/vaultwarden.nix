@@ -1,7 +1,11 @@
+{ pkgs-unstable, ... }:
+
 {
   # Vaultwarden is a lightweight Bitwarden-compatible password manager.
   services.vaultwarden = {
     enable = true;
+    package = pkgs-unstable.vaultwarden;
+    webVaultPackage = pkgs-unstable.vaultwarden.webvault;
     config = {
       ROCKET_ADDRESS = "0.0.0.0";
       ROCKET_PORT = 8222;
