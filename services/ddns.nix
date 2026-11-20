@@ -8,8 +8,8 @@ in
   # ddclient reads the Cloudflare token from a root-only decrypted runtime file.
   sops.secrets.cloudflare-api-token.mode = "0400";
 
-  # Keeps public hostnames correct when the home public IP changes. Public web
-  # application domains are appended by services/web-apps/reverse-proxy.nix.
+  # Keeps public hostnames correct when the home public IP changes. Each public
+  # web application appends its own domain to this list.
   services.ddclient = {
     enable = true;
     protocol = "cloudflare";

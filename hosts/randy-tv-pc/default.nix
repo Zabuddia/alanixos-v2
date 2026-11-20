@@ -8,6 +8,8 @@
     # Graphical and system-wide gaming support.
     ../../profiles/base.nix
     ../../profiles/desktop
+    ../../profiles/desktop/audio.nix
+    ../../profiles/desktop/bluetooth.nix
     ../../profiles/desktop/gaming.nix
     # Sunshine lets another Moonlight client stream this desktop when requested.
     ../../services/sunshine.nix

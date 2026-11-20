@@ -6,13 +6,16 @@
 }:
 
 let
+  domain = "jellyfin.fifefin.com";
+  port = 8096;
+
   # Jellyfin has no NixOS bind-address option because it normally stores this
   # setting in mutable network.xml. Keeping this small file declarative makes
   # the loopback-only boundary reproducible instead of relying on a web-UI edit.
   networkConfig = pkgs.writeText "jellyfin-network.xml" ''
     <?xml version="1.0" encoding="utf-8"?>
     <NetworkConfiguration>
-      <InternalHttpPort>8096</InternalHttpPort>
+      <InternalHttpPort>${toString port}</InternalHttpPort>
       <PublicHttpPort>443</PublicHttpPort>
       <EnableHttps>false</EnableHttps>
       <RequireHttps>false</RequireHttps>
@@ -61,4 +64,11 @@ in
   # Restart Jellyfin when the declarative network file changes so a rebuild
   # cannot leave the old listener active until the next reboot.
   systemd.services.jellyfin.restartTriggers = [ networkConfig ];
+
+  services.caddy.virtualHosts.${domain} = {
+    # Jellyfin sometimes puts API keys in URLs, so never write request paths.
+    logFormat = null;
+    extraConfig = "reverse_proxy 127.0.0.1:${toString port}";
+  };
+  services.ddclient.domains = [ domain ];
 }

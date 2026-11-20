@@ -1,13 +1,16 @@
 { pkgs-unstable, ... }:
 
+let
+  domain = "invidious.fifefin.com";
+  port = 3001;
+in
 {
   # Invidious is a private alternative front end for YouTube.
   services.invidious = {
     enable = true;
     package = pkgs-unstable.invidious;
     address = "127.0.0.1";
-    port = 3001;
-    domain = "invidious.fifefin.com";
+    inherit domain port;
 
     # Companion now performs stream retrieval, replacing the older signature helper.
     sig-helper.enable = false;
@@ -22,4 +25,10 @@
       registration_enabled = false;
     };
   };
+
+  services.caddy.virtualHosts.${domain} = {
+    logFormat = null; # Keep watched-video URLs out of access logs.
+    extraConfig = "reverse_proxy 127.0.0.1:${toString port}";
+  };
+  services.ddclient.domains = [ domain ];
 }

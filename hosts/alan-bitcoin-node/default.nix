@@ -13,7 +13,6 @@
     ../../users/buddia/desktop.nix
   ];
 
-  time.timeZone = "America/Chicago";
   swapDevices = [
     {
       device = "/swapfile";

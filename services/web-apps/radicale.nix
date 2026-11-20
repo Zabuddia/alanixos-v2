@@ -4,6 +4,10 @@
   ...
 }:
 
+let
+  domain = "radicale.fifefin.com";
+  port = 5232;
+in
 {
   # Radicale is a lightweight CalDAV and CardDAV server. Unlike the other
   # applications, it has no account-management UI, so its account is declarative.
@@ -25,7 +29,7 @@
     settings = {
       server.hosts = [
         # Authentication crosses the network only through Caddy's HTTPS listener.
-        "127.0.0.1:5232"
+        "127.0.0.1:${toString port}"
       ];
       auth = {
         type = "htpasswd";
@@ -61,4 +65,10 @@
     after = [ "sops-nix.service" ];
     wants = [ "sops-nix.service" ];
   };
+
+  services.caddy.virtualHosts.${domain} = {
+    logFormat = null; # Calendar and address-book paths contain private names.
+    extraConfig = "reverse_proxy 127.0.0.1:${toString port}";
+  };
+  services.ddclient.domains = [ domain ];
 }

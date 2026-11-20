@@ -19,14 +19,8 @@ in
   # Decrypt the private key into a root-readable runtime file.
   sops.secrets.private-key.mode = "0400";
 
-  # Make every peer reachable as either its hostname or `<hostname>.wg`.
-  networking.hosts = lib.mapAttrs' (
-    name: peer:
-    lib.nameValuePair peer.address [
-      name
-      "${name}.wg"
-    ]
-  ) peers;
+  # Make every peer reachable by its final hostname over WireGuard.
+  networking.hosts = lib.mapAttrs' (name: peer: lib.nameValuePair peer.address [ name ]) peers;
 
   # Clients connect only to the hub; the hub routes traffic between clients.
   networking.wireguard.interfaces.wg0 = {

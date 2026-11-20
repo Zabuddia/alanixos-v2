@@ -1,5 +1,9 @@
 { pkgs-unstable, ... }:
 
+let
+  domain = "openwebui.fifefin.com";
+  port = 18080;
+in
 {
   # Open WebUI is the browser interface for models served by the AI server.
   services.open-webui = {
@@ -15,7 +19,7 @@
     });
     # Caddy is the only network-facing process; the application stays private.
     host = "127.0.0.1";
-    port = 18080;
+    inherit port;
     openFirewall = false;
 
     environment = {
@@ -27,7 +31,7 @@
       ENABLE_INITIAL_ADMIN_SIGNUP = "False";
       ENABLE_SIGNUP = "False";
       DEFAULT_USER_ROLE = "pending";
-      WEBUI_URL = "https://openwebui.fifefin.com";
+      WEBUI_URL = "https://${domain}";
 
       # LiteLLM presents every local model through one OpenAI-compatible API.
       ENABLE_OPENAI_API = "True";
@@ -43,4 +47,10 @@
       SEARXNG_QUERY_URL = "http://127.0.0.1:8888/search?q=<query>&format=json";
     };
   };
+
+  services.caddy.virtualHosts.${domain} = {
+    logFormat = null; # Do not retain conversation or authentication URLs.
+    extraConfig = "reverse_proxy 127.0.0.1:${toString port}";
+  };
+  services.ddclient.domains = [ domain ];
 }

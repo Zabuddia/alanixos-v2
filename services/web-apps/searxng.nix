@@ -4,6 +4,10 @@
   ...
 }:
 
+let
+  domain = "searxng.fifefin.com";
+  port = 8888;
+in
 {
   # Keep SearXNG's session secret outside the world-readable Nix store.
   sops.secrets.searxng-secret-key = {
@@ -30,9 +34,9 @@
       general.instance_name = "Alanix Search";
       server = {
         bind_address = "127.0.0.1";
-        port = 8888;
+        inherit port;
         secret_key = "$SEARX_SECRET_KEY";
-        base_url = "https://searxng.fifefin.com/";
+        base_url = "https://${domain}/";
       };
       search.formats = [
         "html"
@@ -40,4 +44,10 @@
       ];
     };
   };
+
+  services.caddy.virtualHosts.${domain} = {
+    logFormat = null; # Search terms belong in neither Caddy nor system logs.
+    extraConfig = "reverse_proxy 127.0.0.1:${toString port}";
+  };
+  services.ddclient.domains = [ domain ];
 }

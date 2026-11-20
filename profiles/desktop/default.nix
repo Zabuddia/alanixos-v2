@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 
 {
   # Sway is the Wayland compositor and window manager for every graphical host.
@@ -23,23 +23,11 @@
   # Allows desktop applications to request privileged actions through prompts.
   security.polkit.enable = true;
 
-  # PipeWire handles audio; its PulseAudio compatibility supports older applications.
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    pulse.enable = true;
-  };
-  # Grants real-time scheduling to audio processes to prevent dropouts.
-  security.rtkit.enable = true;
-
-  # Bluetooth is available immediately for controllers, headphones, and keyboards.
-  hardware.bluetooth = {
-    enable = true;
-    powerOnBoot = true;
-    input.General.ClassicBondedOnly = false;
-  };
-  services.blueman.enable = true; # Graphical Bluetooth manager and tray applet.
+  # NixOS enables audio and speech services for every graphical session by
+  # default. Priority 900 disables that default while still letting audio.nix's
+  # ordinary settings opt selected hosts back in.
+  services.pipewire.enable = lib.mkOverride 900 false;
+  services.speechd.enable = lib.mkOverride 900 false;
 
   # dconf stores GTK application preferences.
   programs.dconf.enable = true;
@@ -49,11 +37,6 @@
     plugins = [ pkgs.thunar-volman ];
   };
   services.gvfs.enable = true; # Trash, network shares, and removable-volume support.
-
-  environment.systemPackages = with pkgs; [
-    alsa-utils # Command-line audio controls and diagnostics.
-    brightnessctl # Controls laptop and monitor backlight brightness.
-  ];
 
   fonts.packages = with pkgs; [
     dejavu_fonts # General-purpose Latin font family.

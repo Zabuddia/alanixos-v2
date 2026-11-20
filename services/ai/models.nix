@@ -49,47 +49,6 @@ let
       };
     };
 
-  # LiteLLM gives clients one OpenAI-compatible endpoint while the underlying
-  # models retain separate processes, logs, and restart behavior.
-  litellmConfig = (pkgs.formats.yaml { }).generate "litellm.yaml" {
-    model_list = [
-      {
-        model_name = "qwen3.8-27b";
-        litellm_params = {
-          model = "openai/qwen3.8-27b";
-          api_base = "http://127.0.0.1:8086/v1";
-          api_key = "local";
-        };
-      }
-      {
-        model_name = "ornith-1.5-35b-a3b";
-        litellm_params = {
-          model = "openai/ornith-1.5-35b-a3b";
-          api_base = "http://127.0.0.1:8088/v1";
-          api_key = "local";
-        };
-      }
-      {
-        model_name = "qwen3-embedding-4b";
-        litellm_params = {
-          model = "openai/qwen3-embedding-4b";
-          api_base = "http://127.0.0.1:8082/v1";
-          api_key = "local";
-        };
-        model_info.mode = "embedding";
-      }
-      {
-        model_name = "whisper-small";
-        litellm_params = {
-          model = "openai/whisper-small";
-          api_base = "http://127.0.0.1:8085/v1";
-          api_key = "local";
-        };
-        model_info.mode = "audio_transcription";
-      }
-    ];
-  };
-
   # whisper.cpp's small model is downloaded once into persistent state. The
   # service then exposes the same transcription route used by the OpenAI API.
   whisperStart = pkgs.writeShellScript "ai-whisper-start" ''
@@ -119,7 +78,6 @@ in
     isSystemUser = true;
     group = "llm";
     home = stateDir;
-    createHome = true;
     extraGroups = [
       "render"
       "video"
@@ -273,40 +231,51 @@ in
       };
     };
 
-    ai-litellm = {
-      description = "Unified OpenAI-compatible API for local AI models";
-      after = [
-        "ai-embeddings.service"
-        "ai-ornith.service"
-        "ai-qwen-vision.service"
-        "ai-whisper.service"
-      ];
-      wants = [
-        "ai-embeddings.service"
-        "ai-ornith.service"
-        "ai-qwen-vision.service"
-        "ai-whisper.service"
-      ];
-      wantedBy = [ "multi-user.target" ];
-      serviceConfig = {
-        User = "llm";
-        Group = "llm";
-        WorkingDirectory = stateDir;
-        ExecStart = "${lib.getExe pkgs.litellm} --config ${litellmConfig} --host 0.0.0.0 --port 4000";
-        Restart = "on-failure";
-        RestartSec = 5;
-      };
-      environment = {
-        # LiteLLM writes only caches beneath the shared persistent state directory.
-        HOME = stateDir;
-        XDG_CACHE_HOME = "${stateDir}/cache";
-      };
-    };
   };
 
-  environment.systemPackages = [
-    llamaPackage
-    pkgs.litellm
-    whisperPackage
-  ];
+  # The native module supplies the service account, writable state, tokenizer
+  # cache, hardening, and config-file generation for the shared model endpoint.
+  services.litellm = {
+    enable = true;
+    host = "0.0.0.0";
+    port = 4000;
+    openFirewall = false;
+    settings.model_list = [
+      {
+        model_name = "qwen3.8-27b";
+        litellm_params = {
+          model = "openai/qwen3.8-27b";
+          api_base = "http://127.0.0.1:8086/v1";
+          api_key = "local";
+        };
+      }
+      {
+        model_name = "ornith-1.5-35b-a3b";
+        litellm_params = {
+          model = "openai/ornith-1.5-35b-a3b";
+          api_base = "http://127.0.0.1:8088/v1";
+          api_key = "local";
+        };
+      }
+      {
+        model_name = "qwen3-embedding-4b";
+        litellm_params = {
+          model = "openai/qwen3-embedding-4b";
+          api_base = "http://127.0.0.1:8082/v1";
+          api_key = "local";
+        };
+        model_info.mode = "embedding";
+      }
+      {
+        model_name = "whisper-small";
+        litellm_params = {
+          model = "openai/whisper-small";
+          api_base = "http://127.0.0.1:8085/v1";
+          api_key = "local";
+        };
+        model_info.mode = "audio_transcription";
+      }
+    ];
+  };
+
 }

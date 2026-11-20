@@ -42,10 +42,7 @@
     let
       # Build every host through the same module stack and package sources.
       mkHost =
-        {
-          name,
-          system ? "x86_64-linux",
-        }:
+        name: system:
         let
           pkgs-unstable = import nixpkgs-unstable {
             inherit system;
@@ -77,7 +74,7 @@
     in
     {
       # Adding a machine here creates the matching `nixosConfigurations.<name>` output.
-      nixosConfigurations = builtins.mapAttrs (name: system: mkHost { inherit name system; }) {
+      nixosConfigurations = builtins.mapAttrs mkHost {
         alan-ai-server = "x86_64-linux";
         alan-home-server = "x86_64-linux";
         alan-backup-server = "x86_64-linux";

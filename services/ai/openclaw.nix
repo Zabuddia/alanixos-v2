@@ -9,7 +9,7 @@
 let
   # The WireGuard inventory remains the source of the gateway's private address.
   inventory = import ../../network/wireguard/inventory.nix;
-  wireguardAddress = lib.removeSuffix "/32" inventory.peers.alan-ai-server.address;
+  wireguardAddress = inventory.peers.alan-ai-server.address;
   stateDir = "/home/buddia/.openclaw";
   # Reuse Jarvis's v1 workspace so existing memory remains available.
   workspaceDir = "${stateDir}/workspaces/jarvis";
@@ -47,7 +47,6 @@ let
         allowedOrigins = [
           "http://127.0.0.1:18789"
           "http://alan-ai-server:18789"
-          "http://alan-ai-server.wg:18789"
           "http://${wireguardAddress}:18789"
         ];
       };

@@ -8,6 +8,8 @@
     # Operating-system capabilities.
     ../../profiles/base.nix
     ../../profiles/desktop
+    ../../profiles/desktop/audio.nix
+    ../../profiles/desktop/bluetooth.nix
     ../../profiles/desktop/gaming.nix
 
     # Optional network-facing services.
@@ -25,7 +27,6 @@
     ../../users/buddia/media.nix
   ];
 
-  time.timeZone = "America/Chicago";
   # Extra swap provides breathing room when large local models exhaust RAM.
   swapDevices = [
     {

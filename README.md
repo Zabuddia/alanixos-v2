@@ -59,7 +59,7 @@ Host files should contain facts unique to that machine, such as its role, time z
 
 `profiles/base.nix` supplies common Nix, boot, locale, NetworkManager, firewall, SSH, and command-line administration settings.
 
-`profiles/desktop/` supplies the minimal graphical system: Sway, greetd, PipeWire, Bluetooth, Thunar, removable-media support, fonts, and graphical privilege prompts. Gaming, controller support, and printing remain separate capabilities so a host receives them only when needed.
+`profiles/desktop/default.nix` supplies the minimal graphical system: Sway, greetd, Thunar, removable-media support, fonts, and graphical privilege prompts. Audio, Bluetooth, gaming, controller support, and printing are separate capabilities so administration-only servers do not run hardware services they never use.
 
 Home Manager owns Buddia's shell, Git configuration, SSH agent, user applications, and Sway configuration. Applications with meaningful settings have individual files under `users/buddia/apps/`; simple package collections are grouped by purpose under `users/buddia/`.
 
@@ -71,7 +71,7 @@ Users are immutable with `users.mutableUsers = false`. Buddia's password hash is
 
 `services/web-apps/` contains one native NixOS module per application. The directory's `default.nix` imports the complete set only on `alan-main-server`; there is no cluster controller, failover layer, container wrapper, or custom user-reconciliation service.
 
-Every application listens only on loopback. Its backend port is therefore unavailable through the physical LAN and WireGuard. Caddy accepts TCP ports `80` and `443` from non-WireGuard interfaces; the main server's NixOS nftables firewall rejects those two ports on `wg0` and continues to trust all other WireGuard traffic. Caddy provides automatic HTTPS, HTTP-to-HTTPS redirects, forwarded request headers, and WebSocket proxying.
+Every application listens only on loopback. Its backend port is therefore unavailable through the physical LAN, WAN, and WireGuard. Caddy is the single network-facing web entry point on TCP ports `80` and `443`; trusted WireGuard peers can reach the same HTTPS frontends as WAN clients, but cannot bypass Caddy to reach application backends. Caddy provides automatic HTTPS, HTTP-to-HTTPS redirects, forwarded request headers, and WebSocket proxying.
 
 | Application | Purpose | Public URL |
 | --- | --- | --- |
@@ -85,7 +85,7 @@ Every application listens only on loopback. Its backend port is therefore unavai
 | SearXNG | Private metasearch | `https://searxng.fifefin.com` |
 | Vaultwarden | Bitwarden-compatible password manager | `https://vaultwarden.fifefin.com` |
 
-`services/web-apps/reverse-proxy.nix` is the single public exposure inventory. Each entry supplies one domain and one localhost port; the module derives both the Caddy virtual hosts and the Cloudflare DDNS domain list from it. Only TCP ports `80` and `443` are opened on non-WireGuard interfaces. Per-request access logs are disabled because applications such as Jellyfin can place authentication tokens in request URLs; Caddy's operational service messages remain in the journal. The stable NixOS Caddy module manages the proxy because it is operating-system infrastructure; the applications themselves still use their explicitly selected unstable packages.
+Each application module owns its domain, localhost port, Caddy route, and DDNS entry, so adding or removing an application requires changing only that application and the import list. `services/web-apps/reverse-proxy.nix` contains only the Caddy settings and firewall ports shared by every application. Per-request access logs are disabled because applications such as Jellyfin can place authentication tokens in request URLs; Caddy's operational service messages remain in the journal. The stable NixOS Caddy module manages the proxy because it is operating-system infrastructure; the applications themselves still use their explicitly selected unstable packages.
 
 Open WebUI uses LiteLLM on `alan-ai-server` and SearXNG on the same main server. Immich uses its NixOS-managed local PostgreSQL, Redis, and machine-learning services. Invidious uses its NixOS-managed local PostgreSQL database.
 
@@ -125,7 +125,9 @@ The enabled model services are:
 
 The model services use Vulkan acceleration and run as the unprivileged `llm` system user. Model downloads and caches remain under `/var/lib/llm` so the existing v1 downloads can be reused; the Wyoming services keep their downloaded models in their systemd state directories. Services bind to the machine so WireGuard peers can use them, but the normal firewall does not expose them on physical network interfaces. Because `wg0` is intentionally trusted, every WireGuard peer can reach these ports.
 
-OpenClaw runs as a lingering user service owned by `buddia`. Its gateway listens on port `18789`, requires the SOPS-managed gateway token, and can be opened over WireGuard at `http://alan-ai-server.wg:18789`. Telegram is restricted to Alan's configured Telegram account. Its Home Assistant MCP connection targets `alan-home-server` over WireGuard.
+LiteLLM, Piper, and faster-whisper use their native NixOS modules. The llama.cpp and whisper.cpp units remain custom because the server runs several independently configured model processes that do not fit a single-instance module.
+
+OpenClaw runs as a lingering user service owned by `buddia`. Its gateway listens on port `18789`, requires the SOPS-managed gateway token, and can be opened over WireGuard at `http://alan-ai-server:18789`. Telegram is restricted to Alan's configured Telegram account. Its Home Assistant MCP connection targets `alan-home-server` over WireGuard.
 
 OpenClaw also owns a dedicated headless Chromium profile for browser automation. It does not reuse Alan's interactive browser profile, cookies, or open tabs. Idle automated tabs are cleaned up so a long-running gateway does not accumulate browser processes indefinitely. Its web-search tool uses the SearXNG instance on `alan-main-server` instead of a commercial search API.
 
@@ -134,7 +136,8 @@ Jarvis intentionally has unrestricted gateway-host command execution. Its reques
 The v1 custom model dashboard was not carried forward. Standard service inspection keeps the implementation smaller:
 
 ```bash
-systemctl status ai-ornith ai-qwen-vision ai-embeddings ai-whisper ai-litellm
+systemctl status ai-ornith ai-qwen-vision ai-embeddings ai-whisper litellm
+systemctl status wyoming-piper-english wyoming-faster-whisper-english
 journalctl -fu ai-ornith
 systemctl --user status openclaw-gateway
 journalctl --user -fu openclaw-gateway
@@ -154,7 +157,7 @@ The module includes the dependencies for the standard dashboard, Bluetooth, ESPH
 Home Assistant listens on port `8123` but does not open that port on physical network interfaces. It is available through trusted WireGuard at:
 
 ```text
-http://alan-home-server.wg:8123
+http://alan-home-server:8123
 ```
 
 Avahi opens mDNS discovery so the server can find DHCP-assigned smart-home devices on its current LAN. The Home Assistant MCP endpoint lets Jarvis use the token already stored in the AI server's SOPS document. Wyoming connects Home Assistant to the speech services on `alan-ai-server`.
@@ -184,7 +187,7 @@ The blockchain, indexes, generated credentials, and Tor identities are persisten
 
 ### Public DNS and DDNS
 
-`services/ddns.nix` runs only on `alan-main-server`. It updates the public WireGuard endpoint from `network/wireguard/inventory.nix`; `services/web-apps/reverse-proxy.nix` appends every public application domain from the proxy inventory. The Cloudflare token must allow zone reading and DNS editing. ddclient updates existing Cloudflare A records but does not create missing records, so each listed hostname must already have an A record in the `fifefin.com` zone.
+`services/ddns.nix` runs only on `alan-main-server`. It updates the public WireGuard endpoint from `network/wireguard/inventory.nix`; each public application module adds its own domain to the same ddclient configuration. The Cloudflare token must allow zone reading and DNS editing. ddclient updates existing Cloudflare A records but does not create missing records, so each listed hostname must already have an A record in the `fifefin.com` zone.
 
 ## WireGuard
 
@@ -200,7 +203,7 @@ The current topology is hub-and-spoke:
 - `alan-main-server` accepts connections from every peer.
 - Other hosts connect only to `alan-main-server`.
 - The hub forwards traffic between WireGuard peers.
-- Each host is reachable as `<hostname>` and `<hostname>.wg` while the configuration is active.
+- Each host is reachable by its final hostname while the configuration is active.
 - Only the WireGuard subnet is routed through the tunnel; ordinary internet traffic uses the host's current network.
 
 The addresses assigned in the inventory are virtual overlay addresses, not addresses from a home, office, or public LAN. A computer can move between physical networks without changing its WireGuard identity.
@@ -230,6 +233,9 @@ Each host reads `secrets/hosts/<hostname>.yaml`. The encrypted files currently c
 - the OpenClaw gateway token on `alan-ai-server`
 - the OpenClaw Telegram bot token on `alan-ai-server`
 - the Home Assistant token used by OpenClaw on `alan-ai-server`
+- the Invidious Companion and session keys on `alan-main-server`
+- the Radicale account password on `alan-main-server`
+- the SearXNG session key on `alan-main-server`
 
 The matching age identity must exist at `/var/lib/sops-nix/key.txt` before a host can activate a configuration that uses secrets. This identity is bootstrap material and must be transferred securely; it is never committed to Git.
 
@@ -248,7 +254,7 @@ Nix declares the desired operating-system and application configuration, but som
 - `/var/lib/sops-nix/key.txt` is the bootstrap identity that lets a machine decrypt its host secrets.
 - Sunshine retains authorized-client pairing state after its SOPS-managed Web UI password is applied.
 - nix-bitcoin generates service credentials and Tor identities on the node because committing their values would expose them.
-- Local model downloads and caches under `/var/lib/llm` are large reproducible runtime data.
+- Local model downloads and caches under `/var/lib/llm` and `/var/lib/wyoming` are large reproducible runtime data.
 - OpenClaw keeps conversations, memory, pairing information, and other mutable state under `/home/buddia/.openclaw`; its configuration and workspace instructions remain declarative.
 - Home Assistant keeps device registries, history, dashboards, and UI-managed integrations under `/var/lib/hass`; Nix owns its stable base configuration and installed components.
 - Main-server applications keep accounts, libraries, databases, thumbnails, indexes, and settings in their native `/var/lib` state directories. Radicale authentication and stable service settings remain declarative.

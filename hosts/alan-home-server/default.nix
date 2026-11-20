@@ -9,6 +9,7 @@
     # The laptop profile manages the battery and older mobile hardware.
     ../../profiles/base.nix
     ../../profiles/desktop
+    ../../profiles/desktop/bluetooth.nix
     ../../profiles/laptop.nix
 
     # Home automation remains separate from the host's hardware and desktop.
@@ -18,7 +19,6 @@
     ../../users/buddia/desktop.nix
   ];
 
-  time.timeZone = "America/Chicago";
   swapDevices = [
     {
       device = "/swapfile";

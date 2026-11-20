@@ -13,7 +13,7 @@
     # Keeps the public WireGuard endpoint synchronized with the home IP.
     ../../services/ddns.nix
 
-    # Application services; public exposure is a separate responsibility.
+    # Application services and their public reverse-proxy routes.
     ../../services/web-apps
 
     # User account and minimal desktop session.
@@ -21,7 +21,6 @@
     ../../users/buddia/desktop.nix
   ];
 
-  time.timeZone = "America/Chicago";
   swapDevices = [
     {
       device = "/swapfile";

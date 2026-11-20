@@ -1,3 +1,5 @@
+{ pkgs, ... }:
+
 {
   # Firmware updates delivered through the Linux Vendor Firmware Service.
   services.fwupd.enable = true;
@@ -7,6 +9,6 @@
   services.thermald.enable = true;
   # Makes battery and power status available to desktop applications.
   services.upower.enable = true;
-  # Applies power-saving tunables automatically at boot.
-  powerManagement.powertop.enable = true;
+  # Controls the built-in display backlight from the desktop or terminal.
+  environment.systemPackages = [ pkgs.brightnessctl ];
 }

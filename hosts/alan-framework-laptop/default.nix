@@ -10,6 +10,8 @@
     ../../network/wireguard
     ../../profiles/base.nix
     ../../profiles/desktop
+    ../../profiles/desktop/audio.nix
+    ../../profiles/desktop/bluetooth.nix
     ../../profiles/desktop/gaming.nix
     ../../profiles/desktop/printing.nix
     ../../profiles/laptop.nix

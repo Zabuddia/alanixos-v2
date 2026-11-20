@@ -1,65 +1,31 @@
-{ lib, pkgs, ... }:
-
-let
-  # Both Wyoming servers have identical lifecycle and filesystem isolation;
-  # only their persistent directory and command differ.
-  mkVoiceService = stateDirectory: command: {
-    after = [ "network-online.target" ];
-    wants = [ "network-online.target" ];
-    wantedBy = [ "multi-user.target" ];
-    serviceConfig = {
-      DynamicUser = true;
-      StateDirectory = stateDirectory;
-      StateDirectoryMode = "0750";
-      ExecStart = lib.escapeShellArgs command;
-      Restart = "on-failure";
-      RestartSec = 5;
-      NoNewPrivileges = true;
-      PrivateTmp = true;
-      ProtectHome = true;
-      ProtectSystem = "strict";
-    };
-  };
-in
 {
-  # Wyoming is the protocol Home Assistant uses for remote speech services.
-  systemd.services = {
+  # Use NixOS's native Wyoming modules so service users, persistent directories,
+  # command escaping, and systemd hardening remain maintained by Nixpkgs.
+  services.wyoming = {
     # Faster Whisper converts speech to text for Home Assistant Assist.
-    wyoming-faster-whisper = mkVoiceService "wyoming-whisper" [
-      (lib.getExe pkgs.wyoming-faster-whisper)
-      "--uri"
-      "tcp://0.0.0.0:10300"
-      "--stt-library"
-      "faster-whisper"
-      "--model"
-      "large-v3-turbo"
-      "--language"
-      "en"
-      "--device"
-      "cpu"
-      "--compute-type"
-      "int8"
-      "--cpu-threads"
-      "16"
-      "--beam-size"
-      "1"
-      "--data-dir"
-      "/var/lib/wyoming-whisper"
-      "--download-dir"
-      "/var/lib/wyoming-whisper"
-    ];
+    faster-whisper.servers.english = {
+      enable = true;
+      uri = "tcp://0.0.0.0:10300";
+      sttLibrary = "faster-whisper";
+      model = "large-v3-turbo";
+      language = "en";
+      device = "cpu";
+      beamSize = 1;
+      zeroconf.enable = false;
+      extraArgs = [
+        "--compute-type"
+        "int8"
+        "--cpu-threads"
+        "16"
+      ];
+    };
 
     # Piper generates local speech without sending text to a cloud provider.
-    wyoming-piper = mkVoiceService "wyoming-piper" [
-      (lib.getExe pkgs.wyoming-piper)
-      "--uri"
-      "tcp://0.0.0.0:10200"
-      "--voice"
-      "en_US-lessac-medium"
-      "--data-dir"
-      "/var/lib/wyoming-piper"
-      "--download-dir"
-      "/var/lib/wyoming-piper"
-    ];
+    piper.servers.english = {
+      enable = true;
+      uri = "tcp://0.0.0.0:10200";
+      voice = "en_US-lessac-medium";
+      zeroconf.enable = false;
+    };
   };
 }

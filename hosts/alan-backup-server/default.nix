@@ -15,7 +15,6 @@
     ../../users/buddia/disc.nix
   ];
 
-  time.timeZone = "America/Chicago";
   # Grants direct access to the optical drive for MakeMKV and HandBrake.
   users.users.buddia.extraGroups = [ "cdrom" ];
   swapDevices = [

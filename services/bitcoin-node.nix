@@ -1,14 +1,8 @@
 {
   inputs,
-  lib,
   ...
 }:
 
-let
-  # Prefer nix-bitcoin's privacy-preserving defaults without preventing a
-  # deliberate host-specific override later.
-  defaultTrue = lib.mkDefault true;
-in
 {
   # Scope nix-bitcoin's service options to the Bitcoin host rather than making
   # every machine configure its secrets system.
@@ -32,8 +26,8 @@ in
     # Publish private endpoints for each user-facing service. The generated Tor
     # identity keys must be retained when migrating to preserve their addresses.
     onionServices = {
-      bitcoind.enable = defaultTrue;
-      fulcrum.enable = defaultTrue;
+      bitcoind.enable = true;
+      fulcrum.enable = true;
       mempool-frontend = {
         enable = true;
         externalPort = 80;
@@ -72,8 +66,8 @@ in
       # Required by applications that need historical transaction lookup.
       txindex = true;
       tor = {
-        proxy = defaultTrue;
-        enforce = defaultTrue;
+        proxy = true;
+        enforce = true;
       };
     };
 
@@ -81,7 +75,7 @@ in
     # instead of trusting a public Electrum server.
     fulcrum = {
       enable = true;
-      tor.enforce = defaultTrue;
+      tor.enforce = true;
     };
 
     # Mempool provides a local block explorer backed by Bitcoin Core and
@@ -91,8 +85,8 @@ in
       enable = true;
       electrumServer = "fulcrum";
       tor = {
-        proxy = defaultTrue;
-        enforce = defaultTrue;
+        proxy = true;
+        enforce = true;
       };
       frontend = {
         address = "0.0.0.0";
