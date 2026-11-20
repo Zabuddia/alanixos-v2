@@ -85,7 +85,9 @@ The applications currently listen on all addresses but do not open their ports i
 | SearXNG | Private metasearch | `http://alan-main-server.wg:8888` |
 | Vaultwarden | Bitwarden-compatible password manager | `http://alan-main-server.wg:8222` |
 
-Open WebUI uses LiteLLM on `alan-ai-server` and SearXNG on the same main server. Immich uses its NixOS-managed local PostgreSQL, Redis, and machine-learning services. Invidious uses its local PostgreSQL database and the sandboxed signature helper needed for video playback.
+Open WebUI uses LiteLLM on `alan-ai-server` and SearXNG on the same main server. Immich uses its NixOS-managed local PostgreSQL, Redis, and machine-learning services. Invidious uses its NixOS-managed local PostgreSQL database.
+
+Current Invidious releases require Invidious Companion for YouTube stream retrieval; it replaces the older `inv-sig-helper`. The pinned Nixpkgs revision does not package Companion, so `invidious-companion.nix` packages the official prebuilt release using an immutable GitHub asset ID and SHA-256 hash, then runs it as a hardened systemd service. It listens only on `127.0.0.1:8282`, is not exposed to clients, and stores its disposable player-script cache in `/var/lib/invidious-companion`. Its shared key and Invidious's session HMAC key are decrypted by SOPS at activation and never enter the Nix store. Updating Companion requires replacing the release asset IDs and hashes for both supported architectures in that file.
 
 The operating system and NixOS service modules remain on stable `26.05`, while all nine application packages come explicitly from `nixpkgs-unstable`. This provides current upstream application releases without moving the entire operating system to an unstable NixOS branch.
 

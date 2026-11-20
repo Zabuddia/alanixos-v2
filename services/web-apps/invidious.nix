@@ -8,11 +8,8 @@
     address = "0.0.0.0";
     port = 3001;
 
-    # YouTube signatures require a small sandboxed JavaScript helper for some videos.
-    sig-helper = {
-      enable = true;
-      package = pkgs-unstable.inv-sig-helper;
-    };
+    # Companion now performs stream retrieval, replacing the older signature helper.
+    sig-helper.enable = false;
 
     settings = {
       # Application-managed accounts need registration while access is private.

@@ -3,6 +3,7 @@
   imports = [
     ./audiobookshelf.nix
     ./immich.nix
+    ./invidious-companion.nix
     ./invidious.nix
     ./jellyfin.nix
     ./navidrome.nix
