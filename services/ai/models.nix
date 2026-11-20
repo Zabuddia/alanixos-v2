@@ -11,6 +11,8 @@ let
   llamaPackage = pkgs-unstable.llama-cpp-vulkan;
   whisperPackage = pkgs.whisper-cpp-vulkan;
 
+  # Every llama.cpp server accepts WireGuard connections and offloads all
+  # supported model layers to the GPU with fused attention enabled.
   commonLlamaArgs = [
     "--host"
     "0.0.0.0"
@@ -47,6 +49,8 @@ let
       };
     };
 
+  # LiteLLM gives clients one OpenAI-compatible endpoint while the underlying
+  # models retain separate processes, logs, and restart behavior.
   litellmConfig = (pkgs.formats.yaml { }).generate "litellm.yaml" {
     model_list = [
       {
@@ -86,6 +90,8 @@ let
     ];
   };
 
+  # whisper.cpp's small model is downloaded once into persistent state. The
+  # service then exposes the same transcription route used by the OpenAI API.
   whisperStart = pkgs.writeShellScript "ai-whisper-start" ''
     set -euo pipefail
 
@@ -137,6 +143,7 @@ in
     ai-qwen-vision = mkLlamaService {
       description = "Qwen 3.8 vision model";
       args = [
+        # Public API identity and the context reserved for image conversations.
         "--port"
         "8086"
         "--alias"
@@ -149,18 +156,22 @@ in
         "512"
         "--parallel"
         "1"
+        # llama.cpp downloads the quantized model and vision projector from Hugging Face.
         "--hf-repo"
         "unsloth/Qwen3.8-27B-GGUF"
         "--hf-file"
         "Qwen3.8-27B-UD-Q5_K_XL.gguf"
         "--mmproj-url"
         "https://huggingface.co/unsloth/Qwen3.8-27B-GGUF/resolve/main/mmproj-F16.gguf"
+        # Fixed sizing prevents llama.cpp from silently reducing the context.
         "--fit"
         "off"
+        # Quantized key/value caches reduce GPU memory used by the long context.
         "--cache-type-k"
         "q8_0"
         "--cache-type-v"
         "q8_0"
+        # Qwen's small MTP draft model predicts several tokens ahead to improve speed.
         "--spec-type"
         "draft-mtp"
         "--spec-draft-hf"
@@ -169,6 +180,7 @@ in
         "all"
         "--spec-draft-n-max"
         "4"
+        # Image descriptions should return direct content without hidden reasoning.
         "--reasoning"
         "off"
       ];
@@ -177,6 +189,7 @@ in
     ai-ornith = mkLlamaService {
       description = "Ornith reasoning and tool-use model";
       args = [
+        # One large-context slot is dedicated to Jarvis's primary conversation.
         "--port"
         "8088"
         "--alias"
@@ -189,19 +202,23 @@ in
         "512"
         "--parallel"
         "1"
+        # This quantization fits the mixture-of-experts model in local GPU memory.
         "--hf-repo"
         "ornith-ai/Ornith-1.5-35B-A3B-GGUF"
         "--hf-file"
         "Ornith-1.5-35B-Q4_K_M.gguf"
         "--fit"
         "off"
+        # Retain reusable prompt prefixes in RAM and keep an exact KV cache for tools.
         "--cache-ram"
         "16384"
         "--cache-type-k"
         "f16"
         "--cache-type-v"
         "f16"
+        # The embedded Jinja template formats tool calls for this model family.
         "--jinja"
+        # Ornith is the reasoning model; low temperature keeps tool use predictable.
         "--reasoning"
         "on"
         "--temp"
@@ -212,6 +229,7 @@ in
     ai-embeddings = mkLlamaService {
       description = "Qwen memory embedding model";
       args = [
+        # A smaller context and matching batch sizes are required for embedding mode.
         "--port"
         "8082"
         "--alias"
@@ -228,6 +246,7 @@ in
         "Qwen/Qwen3-Embedding-4B-GGUF"
         "--hf-file"
         "Qwen3-Embedding-4B-Q5_K_M.gguf"
+        # Disable chat generation and expose only the embeddings API.
         "--embeddings"
       ];
     };
@@ -278,6 +297,7 @@ in
         RestartSec = 5;
       };
       environment = {
+        # LiteLLM writes only caches beneath the shared persistent state directory.
         HOME = stateDir;
         XDG_CACHE_HOME = "${stateDir}/cache";
       };

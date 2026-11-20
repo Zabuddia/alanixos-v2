@@ -10,6 +10,10 @@
     ../../profiles/base.nix
     ../../profiles/desktop
     ../../profiles/laptop.nix
+
+    # Home automation remains separate from the host's hardware and desktop.
+    ../../services/home-assistant.nix
+
     ../../users/buddia.nix
     ../../users/buddia/desktop.nix
   ];

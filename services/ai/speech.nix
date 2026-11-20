@@ -1,6 +1,8 @@
 { lib, pkgs, ... }:
 
 let
+  # Both Wyoming servers have identical lifecycle and filesystem isolation;
+  # only their persistent directory and command differ.
   mkVoiceService = stateDirectory: command: {
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
@@ -22,6 +24,7 @@ in
 {
   # Wyoming is the protocol Home Assistant uses for remote speech services.
   systemd.services = {
+    # Faster Whisper converts speech to text for Home Assistant Assist.
     wyoming-faster-whisper = mkVoiceService "wyoming-whisper" [
       (lib.getExe pkgs.wyoming-faster-whisper)
       "--uri"
@@ -46,6 +49,7 @@ in
       "/var/lib/wyoming-whisper"
     ];
 
+    # Piper generates local speech without sending text to a cloud provider.
     wyoming-piper = mkVoiceService "wyoming-piper" [
       (lib.getExe pkgs.wyoming-piper)
       "--uri"

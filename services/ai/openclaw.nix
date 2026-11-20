@@ -7,6 +7,7 @@
 }:
 
 let
+  # The WireGuard inventory remains the source of the gateway's private address.
   inventory = import ../../network/wireguard/inventory.nix;
   wireguardAddress = lib.removeSuffix "/32" inventory.peers.alan-ai-server.address;
   stateDir = "/home/buddia/.openclaw";
@@ -14,6 +15,8 @@ let
   workspaceDir = "${stateDir}/workspaces/jarvis";
   json = pkgs.formats.json { };
 
+  # OpenClaw has both a requested exec policy and a host approval policy. Both
+  # are intentionally unrestricted because Alan selected full Jarvis control.
   approvals = json.generate "openclaw-exec-approvals.json" {
     version = 1;
     defaults = {
@@ -50,6 +53,8 @@ let
       };
     };
 
+    # OpenClaw uses LiteLLM as its single local model provider. No real API key
+    # is sent because the proxy is reachable only on this machine and WireGuard.
     models = {
       mode = "merge";
       providers.local = {
@@ -94,6 +99,7 @@ let
       };
     };
 
+    # Jarvis keeps its v1 identity, sessions, and durable workspace paths.
     agents = {
       defaults = {
         workspace = workspaceDir;
@@ -131,11 +137,14 @@ let
       ];
     };
 
+    # The minimal profile starts with a small tool set; alsoAllow lists every
+    # additional capability Jarvis is expected to use.
     tools = {
       profile = "minimal";
       alsoAllow = [
         "cron"
         "bundle-mcp"
+        "browser"
         "edit"
         "exec"
         "image"
@@ -154,6 +163,22 @@ let
       };
       fs.workspaceOnly = false;
       loopDetection.enabled = true;
+    };
+
+    # A dedicated headless Chromium profile keeps automated browsing separate
+    # from Alan's interactive browser data and cookies.
+    browser = {
+      enabled = true;
+      executablePath = lib.getExe pkgs.ungoogled-chromium;
+      headless = true;
+      noSandbox = false;
+      defaultProfile = "openclaw";
+      tabCleanup = {
+        enabled = true;
+        idleMinutes = 30;
+        maxTabsPerSession = 10;
+        sweepMinutes = 10;
+      };
     };
 
     channels.telegram = {
@@ -179,6 +204,8 @@ let
     };
   };
 
+  # Runtime wrappers load SOPS secrets into the process environment without
+  # copying their values into the generated JSON or the Nix store.
   launcher = pkgs.writeShellScript "openclaw-gateway-start" ''
     set -euo pipefail
 
@@ -201,6 +228,8 @@ let
     exec ${lib.getExe openclawPackage} gateway run
   '';
 
+  # The interactive command uses the same state, config, and credentials as
+  # the managed gateway so diagnostics cannot inspect an accidental new profile.
   cli = pkgs.writeShellScriptBin "openclaw" ''
     set -euo pipefail
 

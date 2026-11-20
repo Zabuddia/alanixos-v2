@@ -20,7 +20,7 @@ NixOS configurations for Alan's computers.
 | `alan-main-server` | Private-network hub and primary server | WireGuard hub, Cloudflare DDNS, administration desktop |
 | `alan-ai-server` | AI, GPU, media, and gaming system | Local model APIs, OpenClaw, speech services, desktop, gaming, Tor, Sunshine |
 | `alan-framework-laptop` | Primary portable computer | Desktop, development, documents, graphics, gaming, media, disc tools, printing, Tor, Sunshine, laptop power management |
-| `alan-home-server` | Home-automation server | Administration desktop and laptop hardware management |
+| `alan-home-server` | Home-automation server | Home Assistant, local-device discovery, administration desktop, laptop hardware management |
 | `alan-bitcoin-node` | Bitcoin infrastructure | Bitcoin Core, Fulcrum, Mempool, Tor and onion services |
 | `alan-backup-server` | Backup and disc-ingest server | Administration desktop and disc tools |
 | `alan-tv-pc` | Alan's living-room computer | Media, disc tools, gaming and Sunshine |
@@ -91,7 +91,9 @@ The enabled model services are:
 
 The model services use Vulkan acceleration and run as the unprivileged `llm` system user. Model downloads and caches remain under `/var/lib/llm` so the existing v1 downloads can be reused; the Wyoming services keep their downloaded models in their systemd state directories. Services bind to the machine so WireGuard peers can use them, but the normal firewall does not expose them on physical network interfaces. Because `wg0` is intentionally trusted, every WireGuard peer can reach these ports.
 
-OpenClaw runs as a lingering user service owned by `buddia`. Its gateway listens on port `18789`, requires the SOPS-managed gateway token, and can be opened over WireGuard at `http://alan-ai-server.wg:18789`. Telegram is restricted to Alan's configured Telegram account. The Home Assistant MCP connection is declared for `alan-home-server`; it will become usable when Home Assistant is restored there.
+OpenClaw runs as a lingering user service owned by `buddia`. Its gateway listens on port `18789`, requires the SOPS-managed gateway token, and can be opened over WireGuard at `http://alan-ai-server.wg:18789`. Telegram is restricted to Alan's configured Telegram account. Its Home Assistant MCP connection targets `alan-home-server` over WireGuard.
+
+OpenClaw also owns a dedicated headless Chromium profile for browser automation. It does not reuse Alan's interactive browser profile, cookies, or open tabs. Idle automated tabs are cleaned up so a long-running gateway does not accumulate browser processes indefinitely.
 
 Jarvis intentionally has unrestricted gateway-host command execution. Its requested policy and local approval file both use full execution without prompts. Because it runs as `buddia` and Buddia has passwordless sudo, Jarvis can effectively administer the entire AI server. This is an explicit trust decision, not an accidental default.
 
@@ -104,9 +106,26 @@ systemctl --user status openclaw-gateway
 journalctl --user -fu openclaw-gateway
 openclaw models list
 openclaw channels status --probe
+openclaw browser --browser-profile openclaw status
 ```
 
 The first service start downloads the configured models and can take substantial time and storage. Rebuilds reuse the persistent downloads.
+
+### Home Assistant
+
+`services/home-assistant.nix` restores the home-automation core on `alan-home-server`. Nix owns the stable YAML configuration and package dependencies, while Home Assistant keeps device registries, history, dashboards, credentials, and UI-managed integrations under `/var/lib/hass`. Reusing that v1 state directory preserves existing devices and the long-lived token used by OpenClaw.
+
+The module includes the dependencies for the standard dashboard, Bluetooth, ESPHome, local calendars and task lists, MCP, MQTT clients, Piper, system monitoring, Wake-on-LAN, Wyoming, and ZHA. Including an integration makes it available; integrations still requiring credentials or device selection are configured through Home Assistant's UI and retained in its runtime state.
+
+Home Assistant listens on port `8123` but does not open that port on physical network interfaces. It is available through trusted WireGuard at:
+
+```text
+http://alan-home-server.wg:8123
+```
+
+Avahi opens mDNS discovery so the server can find DHCP-assigned smart-home devices on its current LAN. The Home Assistant MCP endpoint lets Jarvis use the token already stored in the AI server's SOPS document. Wyoming connects Home Assistant to the speech services on `alan-ai-server`.
+
+The old anonymous MQTT broker was deliberately not restored. The MQTT integration is present, but a broker should be added later with declarative users and credentials instead of accepting anonymous read/write access to every topic.
 
 ### Bitcoin node
 
@@ -191,6 +210,7 @@ Nix declares the desired operating-system and application configuration, but som
 - nix-bitcoin generates service credentials and Tor identities on the node because committing their values would expose them.
 - Local model downloads and caches under `/var/lib/llm` are large reproducible runtime data.
 - OpenClaw keeps conversations, memory, pairing information, and other mutable state under `/home/buddia/.openclaw`; its configuration and workspace instructions remain declarative.
+- Home Assistant keeps device registries, history, dashboards, and UI-managed integrations under `/var/lib/hass`; Nix owns its stable base configuration and installed components.
 - Applications and services keep user data, databases, caches, indexes, and downloaded content outside the Nix store.
 
 Treat this as persistent data, not configuration. Back it up or migrate it when it is irreplaceable. Do not solve runtime state by committing generated files or secrets to Git.
