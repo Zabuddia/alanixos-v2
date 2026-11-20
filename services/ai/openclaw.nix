@@ -181,6 +181,22 @@ let
       };
     };
 
+    # Use the SearXNG extension shipped with OpenClaw instead of an external
+    # search API. The extension is copied out because OpenClaw loads plugins
+    # from standalone directories rather than its immutable package tree.
+    plugins.load.paths = [
+      "${pkgs.runCommand "openclaw-searxng-${openclawPackage.version}" { } ''
+        cp -R ${openclawPackage}/lib/openclaw/extensions/searxng "$out"
+      ''}"
+    ];
+    plugins.entries.searxng = {
+      enabled = true;
+      config.webSearch = {
+        baseUrl = "http://alan-main-server:8888";
+        language = "en";
+      };
+    };
+
     channels.telegram = {
       enabled = true;
       tokenFile = config.sops.secrets.openclaw-telegram-bot-token.path;

@@ -3,6 +3,7 @@
   imports = [
     # Machine hardware and private network membership.
     ./hardware-configuration.nix
+    ./storage.nix
     ../../network/wireguard
 
     # Basic graphical system for local or remote administration.
@@ -11,6 +12,9 @@
 
     # Keeps the public WireGuard endpoint synchronized with the home IP.
     ../../services/ddns.nix
+
+    # Application services; public exposure is a separate responsibility.
+    ../../services/web-apps
 
     # User account and minimal desktop session.
     ../../users/buddia.nix

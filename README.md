@@ -67,6 +67,32 @@ Users are immutable with `users.mutableUsers = false`. Buddia's password hash is
 
 ## Services
 
+### Main-server applications
+
+`services/web-apps/` contains one native NixOS module per application. The directory's `default.nix` imports the complete set only on `alan-main-server`; there is no cluster controller, failover layer, container wrapper, or custom user-reconciliation service.
+
+The applications currently listen on all addresses but do not open their ports in the global firewall. Trusted WireGuard peers can reach them at:
+
+| Application | Purpose | WireGuard address |
+| --- | --- | --- |
+| Audiobookshelf | Audiobooks and podcasts | `http://alan-main-server.wg:13378` |
+| Immich | Photos and videos | `http://alan-main-server.wg:2283` |
+| Invidious | Alternative YouTube interface | `http://alan-main-server.wg:3001` |
+| Jellyfin | Movies, television, recordings, and video | `http://alan-main-server.wg:8096` |
+| Navidrome | Music streaming and Subsonic API | `http://alan-main-server.wg:4533` |
+| Open WebUI | Browser interface for the local AI models | `http://alan-main-server.wg:18080` |
+| Radicale | CalDAV calendars and CardDAV contacts | `http://alan-main-server.wg:5232` |
+| SearXNG | Private metasearch | `http://alan-main-server.wg:8888` |
+| Vaultwarden | Bitwarden-compatible password manager | `http://alan-main-server.wg:8222` |
+
+Open WebUI uses LiteLLM on `alan-ai-server` and SearXNG on the same main server. Immich uses its NixOS-managed local PostgreSQL, Redis, and machine-learning services. Invidious uses its local PostgreSQL database and the sandboxed signature helper needed for video playback. Immich is taken from unstable because the stable Immich 2.x package is unsupported and marked insecure; every other application continues to use the stable package set.
+
+Application accounts remain in the applications' own databases. Existing accounts are retained when their v1 state directories are present; a fresh instance uses its normal first-run setup. Open WebUI makes its first account the administrator and leaves later accounts pending. Invidious and Vaultwarden registration are enabled while the services are WireGuard-only so initial accounts can be created; disable registration before adding public exposure. Vaultwarden's browser vault requires trusted HTTPS for normal Web Crypto support, so its public exposure must provide TLS.
+
+Radicale is the exception because it has no account-management interface. Its `buddia` account and password are declared through SOPS, and its rights restrict users to their own collections. SearXNG has no user accounts.
+
+`hosts/alan-main-server/storage.nix` mounts the existing bulk disk and presents its v1 media tree at `/home/buddia/Syncthing/media`. This preserves the library paths already stored by Audiobookshelf, Jellyfin, and Navidrome. The service databases and other mutable application state remain under their native `/var/lib` locations.
+
 ### AI stack
 
 `services/ai/` contains the complete AI stack and is imported only by `alan-ai-server`:
@@ -93,7 +119,7 @@ The model services use Vulkan acceleration and run as the unprivileged `llm` sys
 
 OpenClaw runs as a lingering user service owned by `buddia`. Its gateway listens on port `18789`, requires the SOPS-managed gateway token, and can be opened over WireGuard at `http://alan-ai-server.wg:18789`. Telegram is restricted to Alan's configured Telegram account. Its Home Assistant MCP connection targets `alan-home-server` over WireGuard.
 
-OpenClaw also owns a dedicated headless Chromium profile for browser automation. It does not reuse Alan's interactive browser profile, cookies, or open tabs. Idle automated tabs are cleaned up so a long-running gateway does not accumulate browser processes indefinitely.
+OpenClaw also owns a dedicated headless Chromium profile for browser automation. It does not reuse Alan's interactive browser profile, cookies, or open tabs. Idle automated tabs are cleaned up so a long-running gateway does not accumulate browser processes indefinitely. Its web-search tool uses the SearXNG instance on `alan-main-server` instead of a commercial search API.
 
 Jarvis intentionally has unrestricted gateway-host command execution. Its requested policy and local approval file both use full execution without prompts. Because it runs as `buddia` and Buddia has passwordless sudo, Jarvis can effectively administer the entire AI server. This is an explicit trust decision, not an accidental default.
 
@@ -211,6 +237,7 @@ Nix declares the desired operating-system and application configuration, but som
 - Local model downloads and caches under `/var/lib/llm` are large reproducible runtime data.
 - OpenClaw keeps conversations, memory, pairing information, and other mutable state under `/home/buddia/.openclaw`; its configuration and workspace instructions remain declarative.
 - Home Assistant keeps device registries, history, dashboards, and UI-managed integrations under `/var/lib/hass`; Nix owns its stable base configuration and installed components.
+- Main-server applications keep accounts, libraries, databases, thumbnails, indexes, and settings in their native `/var/lib` state directories. Radicale authentication and stable service settings remain declarative.
 - Applications and services keep user data, databases, caches, indexes, and downloaded content outside the Nix store.
 
 Treat this as persistent data, not configuration. Back it up or migrate it when it is irreplaceable. Do not solve runtime state by committing generated files or secrets to Git.
