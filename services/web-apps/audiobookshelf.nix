@@ -9,7 +9,8 @@
   services.audiobookshelf = {
     enable = true;
     package = pkgs-unstable.audiobookshelf;
-    host = "0.0.0.0";
+    # Caddy is the only network-facing process; the application stays private.
+    host = "127.0.0.1";
     port = 13378;
     openFirewall = false;
   };

@@ -9,6 +9,7 @@
     ./navidrome.nix
     ./open-webui.nix
     ./radicale.nix
+    ./reverse-proxy.nix
     ./searxng.nix
     ./vaultwarden.nix
   ];

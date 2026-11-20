@@ -6,14 +6,14 @@
     enable = true;
     package = pkgs-unstable.vaultwarden;
     webVaultPackage = pkgs-unstable.vaultwarden.webvault;
+    domain = "vaultwarden.fifefin.com";
     config = {
-      ROCKET_ADDRESS = "0.0.0.0";
+      ROCKET_ADDRESS = "127.0.0.1";
       ROCKET_PORT = 8222;
 
-      # Accounts remain application-managed. This is safe only while the
-      # service is private to trusted WireGuard peers and must be disabled
-      # before any public reverse proxy is enabled.
-      SIGNUPS_ALLOWED = true;
+      # Existing accounts remain application-managed, but arbitrary Internet
+      # visitors may not create new vaults.
+      SIGNUPS_ALLOWED = false;
     };
   };
 }

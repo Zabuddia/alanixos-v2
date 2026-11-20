@@ -13,7 +13,8 @@
         "${old.passthru.frontend}/share/open-webui"
       ];
     });
-    host = "0.0.0.0";
+    # Caddy is the only network-facing process; the application stays private.
+    host = "127.0.0.1";
     port = 18080;
     openFirewall = false;
 
@@ -21,9 +22,12 @@
       WEBUI_AUTH = "True";
       ENABLE_PASSWORD_AUTH = "True";
       ENABLE_LOGIN_FORM = "True";
-      ENABLE_INITIAL_ADMIN_SIGNUP = "True";
-      ENABLE_SIGNUP = "True";
+      # Existing accounts remain application-managed. Disabling public signup
+      # prevents a fresh Internet visitor from claiming the administrator role.
+      ENABLE_INITIAL_ADMIN_SIGNUP = "False";
+      ENABLE_SIGNUP = "False";
       DEFAULT_USER_ROLE = "pending";
+      WEBUI_URL = "https://openwebui.fifefin.com";
 
       # LiteLLM presents every local model through one OpenAI-compatible API.
       ENABLE_OPENAI_API = "True";

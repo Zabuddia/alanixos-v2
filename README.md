@@ -17,7 +17,7 @@ NixOS configurations for Alan's computers.
 
 | Host | Purpose | Configured functionality |
 | --- | --- | --- |
-| `alan-main-server` | Private-network hub and primary server | WireGuard hub, Cloudflare DDNS, administration desktop |
+| `alan-main-server` | Private-network hub and primary server | Public web applications, Caddy, WireGuard hub, Cloudflare DDNS, administration desktop |
 | `alan-ai-server` | AI, GPU, media, and gaming system | Local model APIs, OpenClaw, speech services, desktop, gaming, Tor, Sunshine |
 | `alan-framework-laptop` | Primary portable computer | Desktop, development, documents, graphics, gaming, media, disc tools, printing, Tor, Sunshine, laptop power management |
 | `alan-home-server` | Home-automation server | Home Assistant, local-device discovery, administration desktop, laptop hardware management |
@@ -71,19 +71,21 @@ Users are immutable with `users.mutableUsers = false`. Buddia's password hash is
 
 `services/web-apps/` contains one native NixOS module per application. The directory's `default.nix` imports the complete set only on `alan-main-server`; there is no cluster controller, failover layer, container wrapper, or custom user-reconciliation service.
 
-The applications currently listen on all addresses but do not open their ports in the global firewall. Trusted WireGuard peers can reach them at:
+Every application listens only on loopback. Its backend port is therefore unavailable through the physical LAN and WireGuard. Caddy accepts TCP ports `80` and `443` from non-WireGuard interfaces; the main server's NixOS nftables firewall rejects those two ports on `wg0` and continues to trust all other WireGuard traffic. Caddy provides automatic HTTPS, HTTP-to-HTTPS redirects, forwarded request headers, and WebSocket proxying.
 
-| Application | Purpose | WireGuard address |
+| Application | Purpose | Public URL |
 | --- | --- | --- |
-| Audiobookshelf | Audiobooks and podcasts | `http://alan-main-server.wg:13378` |
-| Immich | Photos and videos | `http://alan-main-server.wg:2283` |
-| Invidious | Alternative YouTube interface | `http://alan-main-server.wg:3001` |
-| Jellyfin | Movies, television, recordings, and video | `http://alan-main-server.wg:8096` |
-| Navidrome | Music streaming and Subsonic API | `http://alan-main-server.wg:4533` |
-| Open WebUI | Browser interface for the local AI models | `http://alan-main-server.wg:18080` |
-| Radicale | CalDAV calendars and CardDAV contacts | `http://alan-main-server.wg:5232` |
-| SearXNG | Private metasearch | `http://alan-main-server.wg:8888` |
-| Vaultwarden | Bitwarden-compatible password manager | `http://alan-main-server.wg:8222` |
+| Audiobookshelf | Audiobooks and podcasts | `https://audiobookshelf.fifefin.com` |
+| Immich | Photos and videos | `https://immich.fifefin.com` |
+| Invidious | Alternative YouTube interface | `https://invidious.fifefin.com` |
+| Jellyfin | Movies, television, recordings, and video | `https://jellyfin.fifefin.com` |
+| Navidrome | Music streaming and Subsonic API | `https://navidrome.fifefin.com` |
+| Open WebUI | Browser interface for the local AI models | `https://openwebui.fifefin.com` |
+| Radicale | CalDAV calendars and CardDAV contacts | `https://radicale.fifefin.com` |
+| SearXNG | Private metasearch | `https://searxng.fifefin.com` |
+| Vaultwarden | Bitwarden-compatible password manager | `https://vaultwarden.fifefin.com` |
+
+`services/web-apps/reverse-proxy.nix` is the single public exposure inventory. Each entry supplies one domain and one localhost port; the module derives both the Caddy virtual hosts and the Cloudflare DDNS domain list from it. Only TCP ports `80` and `443` are opened on non-WireGuard interfaces. Per-request access logs are disabled because applications such as Jellyfin can place authentication tokens in request URLs; Caddy's operational service messages remain in the journal. The stable NixOS Caddy module manages the proxy because it is operating-system infrastructure; the applications themselves still use their explicitly selected unstable packages.
 
 Open WebUI uses LiteLLM on `alan-ai-server` and SearXNG on the same main server. Immich uses its NixOS-managed local PostgreSQL, Redis, and machine-learning services. Invidious uses its NixOS-managed local PostgreSQL database.
 
@@ -93,7 +95,7 @@ The operating system and NixOS service modules remain on stable `26.05`, while a
 
 Open WebUI has one isolated package override that splits a malformed Nixpkgs wrapper argument into its three intended arguments. It changes no application source or runtime behavior and can be removed when the unstable package expression contains the correction.
 
-Application accounts remain in the applications' own databases. Existing accounts are retained when their v1 state directories are present; a fresh instance uses its normal first-run setup. Open WebUI makes its first account the administrator and leaves later accounts pending. Invidious and Vaultwarden registration are enabled while the services are WireGuard-only so initial accounts can be created; disable registration before adding public exposure. Vaultwarden's browser vault requires trusted HTTPS for normal Web Crypto support, so its public exposure must provide TLS.
+Application accounts remain in the applications' own databases, and existing accounts are retained when their v1 state directories are present. Public registration is disabled for Invidious, Open WebUI, and Vaultwarden. A completely fresh installation must initialize its first application accounts before WAN exposure, such as through an SSH port forward to the corresponding loopback port. This prevents an Internet visitor from claiming a fresh instance's initial administrator account. Vaultwarden receives its public domain declaratively and uses Caddy's trusted HTTPS for browser Web Crypto support.
 
 Radicale is the exception because it has no account-management interface. Its `buddia` account and password are declared through SOPS, and its rights restrict users to their own collections. SearXNG has no user accounts.
 
@@ -180,9 +182,9 @@ The blockchain, indexes, generated credentials, and Tor identities are persisten
 
 `services/tor.nix` provides a local SOCKS5 proxy for applications on selected hosts. The Bitcoin node has its own Tor configuration because it also publishes onion services.
 
-### WireGuard DDNS
+### Public DNS and DDNS
 
-`services/ddns.nix` runs only on `alan-main-server`. It updates the public WireGuard endpoint from the values in `network/wireguard/inventory.nix`; the endpoint is not duplicated in the DDNS module.
+`services/ddns.nix` runs only on `alan-main-server`. It updates the public WireGuard endpoint from `network/wireguard/inventory.nix`; `services/web-apps/reverse-proxy.nix` appends every public application domain from the proxy inventory. The Cloudflare token must allow zone reading and DNS editing. ddclient updates existing Cloudflare A records but does not create missing records, so each listed hostname must already have an A record in the `fifefin.com` zone.
 
 ## WireGuard
 
@@ -203,7 +205,13 @@ The current topology is hub-and-spoke:
 
 The addresses assigned in the inventory are virtual overlay addresses, not addresses from a home, office, or public LAN. A computer can move between physical networks without changing its WireGuard identity.
 
-The network hosting `alan-main-server` must forward the UDP port declared as `port` in the WireGuard inventory to:
+The network hosting `alan-main-server` must forward these ports to the server:
+
+- the UDP port declared in the WireGuard inventory
+- TCP port `80` for certificate issuance and HTTPS redirects
+- TCP port `443` for the public applications
+
+All forwarding rules use this router-local destination:
 
 ```text
 <alan-main-server-LAN-IP>
@@ -244,6 +252,7 @@ Nix declares the desired operating-system and application configuration, but som
 - OpenClaw keeps conversations, memory, pairing information, and other mutable state under `/home/buddia/.openclaw`; its configuration and workspace instructions remain declarative.
 - Home Assistant keeps device registries, history, dashboards, and UI-managed integrations under `/var/lib/hass`; Nix owns its stable base configuration and installed components.
 - Main-server applications keep accounts, libraries, databases, thumbnails, indexes, and settings in their native `/var/lib` state directories. Radicale authentication and stable service settings remain declarative.
+- Caddy keeps its automatically issued certificates and ACME account state under `/var/lib/caddy`; the domains and proxy routes remain declarative and the certificates can be reissued.
 - Applications and services keep user data, databases, caches, indexes, and downloaded content outside the Nix store.
 
 Treat this as persistent data, not configuration. Back it up or migrate it when it is irreplaceable. Do not solve runtime state by committing generated files or secrets to Git.

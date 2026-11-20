@@ -8,7 +8,8 @@ in
   # ddclient reads the Cloudflare token from a root-only decrypted runtime file.
   sops.secrets.cloudflare-api-token.mode = "0400";
 
-  # Keeps the WireGuard hostname correct when the home public IP changes.
+  # Keeps public hostnames correct when the home public IP changes. Public web
+  # application domains are appended by services/web-apps/reverse-proxy.nix.
   services.ddclient = {
     enable = true;
     protocol = "cloudflare";

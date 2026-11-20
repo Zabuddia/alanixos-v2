@@ -29,9 +29,10 @@
       use_default_settings = true;
       general.instance_name = "Alanix Search";
       server = {
-        bind_address = "0.0.0.0";
+        bind_address = "127.0.0.1";
         port = 8888;
         secret_key = "$SEARX_SECRET_KEY";
+        base_url = "https://searxng.fifefin.com/";
       };
       search.formats = [
         "html"

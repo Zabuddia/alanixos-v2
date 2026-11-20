@@ -6,7 +6,8 @@
   services.immich = {
     enable = true;
     package = pkgs-unstable.immich;
-    host = "0.0.0.0";
+    # Caddy is the only network-facing process; the application stays private.
+    host = "127.0.0.1";
     port = 2283;
     openFirewall = false;
   };

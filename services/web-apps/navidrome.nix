@@ -11,7 +11,8 @@
     package = pkgs-unstable.navidrome;
     openFirewall = false;
     settings = {
-      Address = "0.0.0.0";
+      # Caddy is the only network-facing process; the application stays private.
+      Address = "127.0.0.1";
       Port = 4533;
       MusicFolder = "/home/buddia/Syncthing/media/music";
       Scanner.Schedule = "@every 5m";

@@ -24,14 +24,14 @@
     package = pkgs-unstable.radicale;
     settings = {
       server.hosts = [
-        "0.0.0.0:5232"
-        "[::]:5232"
+        # Authentication crosses the network only through Caddy's HTTPS listener.
+        "127.0.0.1:5232"
       ];
       auth = {
         type = "htpasswd";
         htpasswd_filename = config.sops.templates.radicale-users.path;
         # The plaintext password exists only in the root-owned SOPS source and
-        # this runtime file; WireGuard encrypts authentication on the network.
+        # this runtime file; Caddy encrypts authentication on the network.
         htpasswd_encryption = "plain";
       };
       storage.filesystem_folder = "/var/lib/radicale/collections";
