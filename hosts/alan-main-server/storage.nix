@@ -24,12 +24,14 @@
   systemd.tmpfiles.rules = [
     "d /srv/bulk 0755 root root - -"
     "d /srv/bulk/syncthing/media 2775 buddia users - -"
+    "d /srv/bulk/syncthing/filebrowser 2775 buddia users - -"
     "d /home/buddia/Syncthing/media 2775 buddia users - -"
   ];
 
   # Do not let media services silently use an empty root-filesystem directory.
   systemd.services = {
     audiobookshelf.unitConfig.RequiresMountsFor = [ "/home/buddia/Syncthing/media" ];
+    filebrowser.unitConfig.RequiresMountsFor = [ "/srv/bulk/syncthing/filebrowser" ];
     jellyfin.unitConfig.RequiresMountsFor = [ "/home/buddia/Syncthing/media" ];
     navidrome.unitConfig.RequiresMountsFor = [ "/home/buddia/Syncthing/media" ];
   };

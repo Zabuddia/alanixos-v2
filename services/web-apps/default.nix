@@ -2,6 +2,9 @@
   # Each application stays independently removable and understandable.
   imports = [
     ./audiobookshelf.nix
+    ./filebrowser.nix
+    ./forgejo.nix
+    ./homebox.nix
     ./immich.nix
     ./invidious-companion.nix
     ./invidious.nix

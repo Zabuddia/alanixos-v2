@@ -6,11 +6,11 @@
     ./hardware.nix
     ../../network/wireguard
 
-    # The laptop profile manages the battery and older mobile hardware.
+    # This laptop is operated as an always-on server rather than a portable PC.
+    ./always-on.nix
     ../../profiles/base.nix
     ../../profiles/desktop
     ../../profiles/desktop/bluetooth.nix
-    ../../profiles/laptop.nix
 
     # Home automation remains separate from the host's hardware and desktop.
     ../../services/home-assistant.nix

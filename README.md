@@ -76,6 +76,9 @@ Every application listens only on loopback. Its backend port is therefore unavai
 | Application | Purpose | Public URL |
 | --- | --- | --- |
 | Audiobookshelf | Audiobooks and podcasts | `https://audiobookshelf.fifefin.com` |
+| File Browser | Shared-file management | `https://filebrowser.fifefin.com` |
+| Forgejo | Git repository hosting | `https://forgejo.fifefin.com` |
+| Homebox | Household inventory | `https://homebox.fifefin.com` |
 | Immich | Photos and videos | `https://immich.fifefin.com` |
 | Invidious | Alternative YouTube interface | `https://invidious.fifefin.com` |
 | Jellyfin | Movies, television, recordings, and video | `https://jellyfin.fifefin.com` |
@@ -91,15 +94,15 @@ Open WebUI uses LiteLLM on `alan-ai-server` and SearXNG on the same main server.
 
 Current Invidious releases require Invidious Companion for YouTube stream retrieval; it replaces the older `inv-sig-helper`. The pinned Nixpkgs revision does not package Companion, so `invidious-companion.nix` packages the official prebuilt release using an immutable GitHub asset ID and SHA-256 hash, then runs it as a hardened systemd service. It listens only on `127.0.0.1:8282`, is not exposed to clients, and stores its disposable player-script cache in `/var/lib/invidious-companion`. Its shared key and Invidious's session HMAC key are decrypted by SOPS at activation and never enter the Nix store. Updating Companion requires replacing the release asset IDs and hashes for both supported architectures in that file.
 
-The operating system and NixOS service modules remain on stable `26.05`, while all nine application packages come explicitly from `nixpkgs-unstable`. This provides current upstream application releases without moving the entire operating system to an unstable NixOS branch.
+The operating system and NixOS service modules remain on stable `26.05`, while all twelve application packages come explicitly from `nixpkgs-unstable`. This provides current upstream application releases without moving the entire operating system to an unstable NixOS branch.
 
 Open WebUI has one isolated package override that splits a malformed Nixpkgs wrapper argument into its three intended arguments. It changes no application source or runtime behavior and can be removed when the unstable package expression contains the correction.
 
-Application accounts remain in the applications' own databases, and existing accounts are retained when their v1 state directories are present. Public registration is disabled for Invidious, Open WebUI, and Vaultwarden. A completely fresh installation must initialize its first application accounts before WAN exposure, such as through an SSH port forward to the corresponding loopback port. This prevents an Internet visitor from claiming a fresh instance's initial administrator account. Vaultwarden receives its public domain declaratively and uses Caddy's trusted HTTPS for browser Web Crypto support.
+Application accounts remain in the applications' own databases, and existing accounts are retained when their v1 state directories are present. Public registration is disabled for Forgejo, Homebox, Invidious, Open WebUI, and Vaultwarden; File Browser does not provide public self-registration. A completely fresh installation must initialize its first application accounts before WAN exposure, using the application's administration command or a temporary registration setting as appropriate. This prevents an Internet visitor from claiming a fresh instance's initial administrator account. Vaultwarden receives its public domain declaratively and uses Caddy's trusted HTTPS for browser Web Crypto support.
 
 Radicale is the exception because it has no account-management interface. Its `buddia` account and password are declared through SOPS, and its rights restrict users to their own collections. SearXNG has no user accounts.
 
-`hosts/alan-main-server/storage.nix` mounts the existing bulk disk and presents its v1 media tree at `/home/buddia/Syncthing/media`. This preserves the library paths already stored by Audiobookshelf, Jellyfin, and Navidrome. The service databases and other mutable application state remain under their native `/var/lib` locations.
+`hosts/alan-main-server/storage.nix` mounts the existing bulk disk and presents its v1 media tree at `/home/buddia/Syncthing/media`. This preserves the library paths already stored by Audiobookshelf, Jellyfin, and Navidrome. File Browser serves the existing `/srv/bulk/syncthing/filebrowser` tree and will not start without the bulk mount. Service databases and other mutable application state remain under their native `/var/lib` locations.
 
 ### AI stack
 
